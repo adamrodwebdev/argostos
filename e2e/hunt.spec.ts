@@ -64,6 +64,28 @@ test.describe('the hunt: one finger steers, the actions arrive one by one', () =
     }
   });
 
+  test('on a computer the keys show by the buttons: Space by the breath, the mouse’s buttons', async ({
+    page,
+  }, testInfo) => {
+    test.skip(testInfo.project.name !== 'desktop', 'a computer: a fine pointer, no touch screen');
+    await page.goto('/?mute=1&hunt=3');
+    await expect(page.locator('#game')).toHaveAttribute('data-hunting', 'playing');
+    await expect(page.locator('.breath-wrap kbd')).toHaveText('Space');
+    for (const hint of ['.breath-wrap kbd', '.acts .k-ram', '.acts .k-str']) {
+      await expect(page.locator(hint)).toBeVisible();
+    }
+  });
+
+  test('on a touch screen no key hint shows, only the buttons', async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name === 'desktop', 'the emulated phones are touch screens');
+    await page.goto('/?mute=1&hunt=3');
+    await expect(page.locator('#game')).toHaveAttribute('data-hunting', 'playing');
+    await expect(page.getByRole('button', { name: 'Breathe glass' })).toBeVisible();
+    const hints = page.locator('.acts kbd');
+    await expect(hints).toHaveCount(3);
+    for (const hint of await hints.all()) await expect(hint).toBeHidden();
+  });
+
   test('hunt 1 shows its drilling tower on the scanner; undermined, it falls and its mark dims', async ({
     page,
   }, testInfo) => {

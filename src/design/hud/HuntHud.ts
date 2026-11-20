@@ -125,6 +125,11 @@ export class HuntHud {
     this.element.append(this.top, this.alert, this.hint, this.hand, this.acts, this.glow);
   }
 
+  /** The key hints by the buttons (a computer's keyboard and mouse), or the touch hand instead. */
+  showKeyHints(on: boolean): void {
+    this.element.toggleAttribute('data-keys', on);
+  }
+
   /** A new hunt: what is unlocked shows at once, the hint if it has one, no alarm. */
   bind(hunt: Hunt, events: HuntEvents): void {
     this.alertLeft = 0;

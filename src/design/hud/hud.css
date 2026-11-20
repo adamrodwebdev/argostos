@@ -295,7 +295,7 @@
   }
 }
 @media (pointer: fine) {
-  .hand {
+  .hud[data-keys] .hand {
     display: none;
   }
 }
@@ -440,7 +440,10 @@
   }
 }
 
-/* Key hints, on a computer only: the mouse's buttons under ram and strike, Space by the breath. */
+/*
+ * Key hints, on a computer only (a fine pointer and no touch screen, `data-keys` from the
+ * platform): the mouse's buttons under ram and strike, Space by the breath.
+ */
 .acts kbd {
   position: absolute;
   display: none;
@@ -458,13 +461,13 @@
   width: 20px;
   height: 20px;
 }
-@media (hover: hover) and (pointer: fine) {
-  .acts kbd {
+@media (pointer: fine) {
+  .hud[data-keys] .acts kbd {
     display: grid;
     place-items: center;
   }
-  .acts:not([data-ram]) .kh,
-  .acts:not([data-strike]) .k-str {
+  .hud[data-keys] .acts:not([data-ram]) .kh,
+  .hud[data-keys] .acts:not([data-strike]) .k-str {
     display: none;
   }
 }

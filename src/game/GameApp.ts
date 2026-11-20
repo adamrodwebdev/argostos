@@ -19,6 +19,7 @@ import { FirstIntent, HeadingIntent, TargetIntent } from '../logic/input/Steerin
 import { SessionLog } from '../logic/session/SessionLog';
 import { Clipboard } from '../platform/Clipboard';
 import { FrameLoop, type FrameTarget } from '../platform/FrameLoop';
+import { watchKeyHints } from '../platform/keyHints';
 import { KeyInput } from '../platform/KeyInput';
 import { WebPlatform, type PlatformPort } from '../platform/PlatformPort';
 import { PointerInput } from '../platform/PointerInput';
@@ -168,6 +169,10 @@ export class GameApp implements FrameTarget {
     });
     this.keys = new KeyInput(window, (command) => {
       this.command(command);
+    });
+    // Key hints only on a computer: never on a touch screen, off at the first finger.
+    watchKeyHints(window, (on) => {
+      this.hud.showKeyHints(on);
     });
     this.readout = options.debug ? new DebugReadout(elements.readout, text, this.probe) : null;
     this.loader = new SpriteLoader(SPRITE_URLS, window);
