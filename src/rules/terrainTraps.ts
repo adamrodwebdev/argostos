@@ -24,17 +24,20 @@ export const GROUND = {
   /** A wheel the sand drops away from falls under this gravity (m/s²). */
   gravity: 14,
   /** A truck tilted past this angle (degrees) tips over: the fall. */
-  tipDeg: 34,
+  tipDeg: 30,
   /** Sand rising ahead steeper than this (degrees): the truck is stuck in it. */
   climbDeg: 24,
   /** A stuck truck stops (m/s): its wheels spin as if it drove on, it goes nowhere. */
   stuckSpeed: 0,
-  /** A landing slower than this (m/s) does no harm. */
-  safeLandingMps: 4,
-  /** Plate a landing takes per m/s above that. */
-  damagePerMps: 9,
-  /** A landing this hard (m/s) breaks the machine: the fall. */
-  crashMps: 9,
+  /**
+   * A landing slower than this (m/s) does no harm: a fall of about 1.5 m, so one pass's cave-in
+   * only jolts a truck; a pit dug on purpose hurts it.
+   */
+  safeLandingMps: 6.5,
+  /** Plate a landing takes per m/s above that (a 2.5 m fall: about a light truck's half). */
+  damagePerMps: 14,
+  /** A landing this hard (m/s), a fall of about 3.2 m, breaks the machine: the fall. */
+  crashMps: 9.5,
 } as const;
 
 /** The drilling tower of the first minute: tall, standing on a wide base on the sand. */

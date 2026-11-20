@@ -110,7 +110,7 @@ describe('TruckFleet: the moving ground hurts and fells the Company’s trucks',
     const hits: HitEvent[] = [];
     world.events.on('hit', (event) => hits.push(event));
     world.fleet.sendWave(wave({ machines: ['armoredHauler'], x: 45 }), 0);
-    dig(world, 62, { width: 12, depth: 1.6 });
+    dig(world, 62, { width: 12, depth: 2.3 });
     const truck = world.fleet.all[0]!;
     for (let i = 0; i < 60 * 10; i++) world.tick();
     const falls = hits.filter((hit) => hit.kind === 'fall');
