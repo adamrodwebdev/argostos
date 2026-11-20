@@ -36,6 +36,8 @@ import { SwallowFromBelow } from '../takedown/SwallowFromBelow';
 import { TakedownRegistry } from '../takedown/Takedown';
 import { TheFall } from '../takedown/TheFall';
 import { Wreckage } from '../takedown/Wreckage';
+import type { Tower } from '../tower/Tower';
+import { TowerSite } from '../tower/TowerSite';
 import type { Truck } from '../truck/Truck';
 import { TruckFleet } from '../truck/TruckFleet';
 import { HuntDirector } from './HuntDirector';
@@ -58,8 +60,8 @@ const JAW_REACH = 1.6;
 const ROCKS = 8;
 
 /**
- * One hunt in the desert arena: the sand, the hero and his actions, the Company's convoys and
- * drones, stepped together at a fixed rate by the hunt's director. It decides everything and
+ * One hunt in the desert arena: the sand, the hero and his actions, the Company's convoys,
+ * drones and drilling towers, stepped together at a fixed rate by the hunt's director. It decides everything and
  * draws nothing; it tells the rest of the game what happened through its events.
  */
 export class Hunt {
@@ -81,6 +83,7 @@ export class Hunt {
   readonly stats: HuntStats;
   private readonly drones: DroneSquad;
   private readonly fleet: TruckFleet;
+  private readonly towerSite: TowerSite;
   private readonly director: HuntDirector;
   private readonly targets: Targets;
   private readonly requests = new ActionRequests();
@@ -149,7 +152,18 @@ export class Hunt {
       combat,
       stepSeconds: STEP_SECONDS,
     });
-    this.targets = new Targets([() => this.fleet.all, () => this.drones.all]);
+    this.towerSite = new TowerSite({
+      surface: this.surface,
+      events,
+      combat,
+      thrower,
+      stepSeconds: STEP_SECONDS,
+    });
+    this.targets = new Targets([
+      () => this.fleet.all,
+      () => this.drones.all,
+      () => this.towerSite.all,
+    ]);
     this.rocks = new Rocks(ROCKS, {
       surface: this.surface,
       targets: this.targets,
@@ -171,6 +185,7 @@ export class Hunt {
       row: this.row,
       fleet: this.fleet,
       drones: this.drones,
+      towers: this.towerSite,
       actions: this.actions,
       events,
       stepSeconds: STEP_SECONDS,
@@ -195,6 +210,11 @@ export class Hunt {
   /** The drones over the arena now. */
   get droneList(): readonly Drone[] {
     return this.drones.all;
+  }
+
+  /** The drilling towers in the arena now (standing, falling, or sinking). */
+  get towerList(): readonly Tower[] {
+    return this.towerSite.all;
   }
 
   /** Trucks the hero destroyed this hunt. */
@@ -253,6 +273,7 @@ export class Hunt {
     this.targets.refresh();
     this.actions.step(STEP_SECONDS);
     this.fleet.step(this.jaws, hero);
+    this.towerSite.step(this.jaws);
     this.drones.step(hero, this.jaws);
     this.rocks.step();
     this.dome.step(STEP_SECONDS);

@@ -34,6 +34,13 @@ export interface DroneRow {
   readonly spanM: number;
 }
 
+/** A drilling tower standing in the arena from `atS`: undermine it and it tips and sinks. */
+export interface TowerRow {
+  readonly atS: number;
+  /** The middle of its base (m). */
+  readonly x: number;
+}
+
 export interface UnlockRow {
   readonly action: ActionId;
   /** When its button appears (s from the hunt's start; 0: from the start). */
@@ -47,6 +54,8 @@ export type HintId = (typeof HINT_IDS)[number];
 export interface HuntRow {
   readonly waves: readonly WaveRow[];
   readonly drones: readonly DroneRow[];
+  /** Towers to bring down (a bonus: the hunt is won by its convoys). */
+  readonly towers: readonly TowerRow[];
   readonly unlocks: readonly UnlockRow[];
   readonly hint: HintId | null;
 }
@@ -72,6 +81,8 @@ export const HUNTS: readonly HuntRow[] = [
       { atS: 42, machines: ['hauler', 'hauler', 'hauler'], x: FROM_RIGHT, heading: -1, panic: [] },
     ],
     drones: [{ atS: 36, x: 100, spanM: 24 }],
+    // The first minute's sinking tower, met about 10 s in.
+    towers: [{ atS: 0, x: 72 }],
     unlocks: [{ action: 'breath', atS: 20 }],
     hint: 'followVibrations',
   },
@@ -91,6 +102,7 @@ export const HUNTS: readonly HuntRow[] = [
       },
     ],
     drones: [{ atS: 5, x: 90, spanM: 30 }],
+    towers: [{ atS: 0, x: 118 }],
     unlocks: [
       { action: 'breath', atS: 0 },
       { action: 'ram', atS: 0 },
@@ -128,6 +140,7 @@ export const HUNTS: readonly HuntRow[] = [
       { atS: 0, x: 60, spanM: 24 },
       { atS: 30, x: 110, spanM: 26 },
     ],
+    towers: [{ atS: 0, x: 88 }],
     unlocks: [
       { action: 'breath', atS: 0 },
       { action: 'ram', atS: 0 },

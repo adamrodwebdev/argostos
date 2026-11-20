@@ -92,8 +92,10 @@ export interface HuntEventMap {
   hit: HitEvent;
   /** A machine's plate is gone: a truck stalls, a drone falls. */
   gaveOut: { readonly targetId: number; readonly machine: MachineId } & Place;
-  /** A machine fell for good (a truck swallowed, a drone crashed). */
+  /** A machine fell for good (a truck swallowed, a drone crashed, a tower buried). */
   destroyed: DestroyedEvent;
+  /** A drilling tower began to topple (its side: `way`); its cables snap. */
+  towerToppled: { readonly towerId: number; readonly way: 1 | -1 } & Place;
   /** A convoy is all taken; `inGlass`: a convoy of several, every one caught in a glass dome. */
   convoyCleared: { readonly waveId: number; readonly size: number; readonly inGlass: boolean };
   /** A convoy runs for an exit. */

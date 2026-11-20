@@ -4,11 +4,11 @@
  * wounds: the machines run without drivers, nobody is in them (PEGI 12).
  */
 
-export const MACHINE_IDS = ['hauler', 'armoredHauler', 'drone'] as const;
+export const MACHINE_IDS = ['hauler', 'armoredHauler', 'drone', 'drillTower'] as const;
 export type MachineId = (typeof MACHINE_IDS)[number];
 
-/** How a machine moves: on the sand on its wheels, or in the air on its rotors. */
-export type MachineKind = 'truck' | 'drone';
+/** How a machine stands: on the sand on its wheels, in the air on its rotors, or on a base. */
+export type MachineKind = 'truck' | 'drone' | 'tower';
 
 /**
  * The parts a machine is made of. In P2 every machine has one, its whole body; the tyres and
@@ -77,6 +77,19 @@ export const MACHINES: ReadonlyMap<MachineId, MachineRow> = new Map<MachineId, M
       fleeSpeed: 7.5,
       hitStopMs: 120,
       plated: true,
+    },
+  ],
+  [
+    'drillTower',
+    {
+      kind: 'tower',
+      parts: [{ id: 'body', hp: 200, effect: 'none' }],
+      bar: true,
+      crystals: 20,
+      cruiseSpeed: 0,
+      fleeSpeed: 0,
+      hitStopMs: 120,
+      plated: false,
     },
   ],
   [
