@@ -136,8 +136,11 @@ steps pass about 4 ms on a real phone, the simulation moves to a worker, its gri
 in transferable buffers (portal iframes may refuse the headers a shared buffer needs).
 
 **Download**: the page 4.8 kB and its entry script 8.0 kB (2.0 and 3.5 kB gzipped), then the
-game, loaded after the first paint, 87.4 kB (30.3 kB gzipped), and one set of truck sprites per
-screen, 46.4 kB at 32 px per metre or 122.0 kB at 64 px per metre. Nothing else is requested.
+game, loaded after the first paint, 87.4 kB (30.8 kB gzipped), and one set of truck sprites per
+screen, 46.4 kB at 32 px per metre or 122.0 kB at 64 px per metre, fetched once the game runs.
+Nothing else is requested. **Start**: from a cold cache, on the emulated phone slowed 4× over a
+slow 4G line (150 ms of latency, 1.6 Mbit/s), the first paint came at 0.24 to 0.70 s and the
+game answered the finger at 0.89 to 0.99 s (three loads, 36.9 kB transferred).
 
 ## Branches and deployment
 
