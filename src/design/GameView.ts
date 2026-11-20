@@ -2,6 +2,7 @@ import type { Hunt } from '../logic/hunt/Hunt';
 import type { HuntEvents } from '../logic/hunt/HuntEvents';
 import type { Box } from '../logic/truck/Truck';
 import type { RandomSource } from '../rules/random';
+import { TOWER } from '../rules/terrainTraps';
 import { ActionPainter } from './actions/ActionPainter';
 import { Camera, type Followed } from './Camera';
 import { CombatEffects } from './fx/CombatEffects';
@@ -54,6 +55,8 @@ export interface ViewFrame {
 
 /** Prey this close to his jaws (m) makes them open wide. */
 const JAWS_SENSE_M = 7;
+/** A tower's fall is framed until this long after its crash (s): the hero again after. */
+const TOWER_FRAMED_S = 1.5;
 
 /**
  * Draws a hunt: the camera frames the hero, then the sky and far dunes, the sand, the drilling
@@ -210,15 +213,22 @@ export class GameView {
   /**
    * What the camera frames: the hero, or, while a takedown plays, the wreck mid-screen with the
    * sky above it for what it throws, the hero beside it (the moment stays on screen while he
-   * dives away with it).
+   * dives away with it); a drilling tower's fall the same way, until a moment after its crash.
    */
   private framed(): Followed {
-    const { hero, trucks } = this.options.hunt;
-    const caught = trucks.find((truck) => truck.isCaught);
-    if (!caught) return hero;
+    const { hero, trucks, towerList } = this.options.hunt;
     const focus = this.focus;
-    focus.x = (hero.x + caught.wreck.x) / 2;
-    focus.z = caught.wreck.z;
+    const caught = trucks.find((truck) => truck.isCaught);
+    if (caught) {
+      focus.x = (hero.x + caught.wreck.x) / 2;
+      focus.z = caught.wreck.z;
+      return focus;
+    }
+    const falling = towerList.find((tower) => tower.fell && tower.downSeconds < TOWER_FRAMED_S);
+    if (!falling) return hero;
+    const middle = falling.x + Math.sin(falling.lean) * TOWER.heightM * 0.45;
+    focus.x = (hero.x + middle) / 2;
+    focus.z = falling.baseZ;
     return focus;
   }
 
