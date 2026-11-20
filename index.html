@@ -72,7 +72,11 @@
         background: color-mix(in srgb, var(--accent) 32%, transparent);
       }
       /* The game is interface: never selected, no long-press menu, no tap flash. */
+      /* --side: the art beside the playing frame on a window wider than 2:1 (VIEW.maxAspect in
+         src/rules/viewing.ts); the controls stay inside the frame. */
       .game {
+        container: game / size;
+        --side: max(0px, (100cqw - 200cqh) / 2);
         position: fixed;
         inset: 0;
         -webkit-user-select: none;
@@ -98,7 +102,7 @@
         transform: translateX(-50%);
         box-sizing: border-box;
         width: max-content;
-        max-width: calc(100% - 2rem);
+        max-width: calc(100% - 2 * var(--side) - 2rem);
         margin: 0;
         padding: 0.625rem 1rem;
         border-radius: 1.25rem;
@@ -110,9 +114,9 @@
       .readout {
         position: absolute;
         top: max(env(safe-area-inset-top), 0.75rem);
-        left: max(env(safe-area-inset-left), 0.75rem);
+        left: max(env(safe-area-inset-left), calc(var(--side) + 0.75rem));
         box-sizing: border-box;
-        max-width: calc(100% - 5.25rem);
+        max-width: calc(100% - 2 * var(--side) - 5.25rem);
         margin: 0;
         padding: 0.5rem 0.75rem;
         overflow: hidden;
@@ -131,7 +135,7 @@
       .sound {
         position: absolute;
         top: max(env(safe-area-inset-top), 0.75rem);
-        right: max(env(safe-area-inset-right), 0.75rem);
+        right: max(env(safe-area-inset-right), calc(var(--side) + 0.75rem));
         display: grid;
         place-items: center;
         width: 3rem;

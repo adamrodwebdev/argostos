@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { playFrame } from '../src/rules/viewing';
 
 /** Console errors and uncaught exceptions of a page, collected from its first load. */
 function collectErrors(page: Page): string[] {
@@ -76,6 +77,20 @@ test.describe('the game loads, draws and stays clean', () => {
     await expect(toggle).toHaveAttribute('aria-pressed', 'true');
     await toggle.click();
     await expect(toggle).toHaveAttribute('aria-pressed', 'false');
+  });
+
+  test('on a window wider than 2:1 the controls stay inside the centred 2:1 frame', async ({
+    page,
+  }, testInfo) => {
+    test.skip(testInfo.project.name !== 'desktop', 'one wide desktop window is enough');
+    await page.setViewportSize({ width: 2560, height: 1080 });
+    await page.goto('/?mute=1');
+    await expect(page.locator('#game')).toHaveAttribute('data-state', 'playing');
+    const frame = playFrame(2560, 1080);
+    const box = await page.getByRole('button', { name: 'Mute the sound' }).boundingBox();
+    const right = box && box.x + box.width;
+    expect(box?.x).toBeGreaterThanOrEqual(frame.x);
+    expect(right).toBeLessThanOrEqual(frame.x + frame.width);
   });
 
   test('the cursor says what can be clicked: an aim on the play area, a hand on the button', async ({

@@ -99,7 +99,8 @@ beats it emits (`strike`, `tear`, `shatter`, `fuel`, `drag`, `buried`), mapped i
   cap, the time scale, the framing at every screen size from 320 × 568, and every reader at the
   doors with its table of hostile inputs.
 - **Smoke** (`e2e/`, Playwright, Chrome only for now): loads, draws, no console error, no
-  sideways scroll, zoom allowed, the mute button, the cursors.
+  sideways scroll, zoom allowed, the mute button, the cursors, and on a window wider than 2:1
+  the controls inside the centred playing frame.
 
 ## Performance
 
