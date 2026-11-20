@@ -1,6 +1,14 @@
 import { expect, test, type Page } from '@playwright/test';
 import { playFrame } from '../src/rules/viewing';
 
+/**
+ * WebKit on GitHub's runners draws without a graphics card: a second of the game takes it several
+ * seconds, so the journeys that play long stretches of a hunt run there in Chrome and Firefox
+ * only (WebKit still plays them on a machine with one).
+ */
+const SLOW_ENGINE = 'webkit';
+const SLOW_REASON = 'WebKit on the CI draws without a GPU: long stretches of play run elsewhere';
+
 /** Opens the game with the page's clock in the test's hands (it moves only when told). */
 async function openPaused(page: Page, query: string): Promise<void> {
   await page.clock.install({ time: 0 });
@@ -37,7 +45,8 @@ test.describe('the hunt: one finger steers, the actions arrive one by one', () =
     }
   });
 
-  test('in hunt 1 the breath arrives at 20 s, full', async ({ page }) => {
+  test('in hunt 1 the breath arrives at 20 s, full', async ({ page, browserName }) => {
+    test.skip(browserName === SLOW_ENGINE && !!process.env.CI, SLOW_REASON);
     await openPaused(page, 'mute=1');
     const breath = page.getByRole('button', { name: 'Breathe glass' });
     await play(page, 15_000);
@@ -142,8 +151,10 @@ test.describe('the pause and the end of a hunt', () => {
 
   test('the first hunt played to its end shows its result, and Next hunt opens the ram', async ({
     page,
+    browserName,
   }, testInfo) => {
     test.skip(testInfo.project.name !== 'desktop', 'one journey through a whole hunt is enough');
+    test.skip(browserName === SLOW_ENGINE && !!process.env.CI, SLOW_REASON);
     // A minute of the game's time, frame by frame: WebKit, drawing without a graphics card,
     // needed about four and a half minutes of real time for it on the development machine.
     test.setTimeout(testInfo.timeout * 6);
