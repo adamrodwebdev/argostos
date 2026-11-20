@@ -132,6 +132,37 @@
         white-space: pre-wrap;
         pointer-events: none;
       }
+      /* The title screen of the first paint: the game's name, large, over the desert's colours,
+         until the first hunt draws (then it stays for screen readers only). Nothing the game
+         paints later is larger, so the page's largest paint is this first one. */
+      .title {
+        position: absolute;
+        top: 15%;
+        left: 50%;
+        margin: 0;
+        transform: translate(-50%, -50%);
+        /* Over the first paint's sky, the same in both themes: a dark ink in both. */
+        color: #2a1a0c;
+        font:
+          800 clamp(2.75rem, 6vw + 1.5rem, 5.5rem) / 1 system-ui,
+          -apple-system,
+          'Segoe UI',
+          Roboto,
+          sans-serif;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        text-shadow: 0 0.06em 0.3em rgb(255 255 255 / 0.4);
+        white-space: nowrap;
+      }
+      .game:not([data-state='loading']) .title {
+        top: auto;
+        left: auto;
+        transform: none;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+      }
       [hidden] {
         display: none !important;
       }
@@ -150,7 +181,7 @@
   </head>
   <body>
     <main class="game" id="game" data-state="loading">
-      <h1 class="visually-hidden">Argostos</h1>
+      <h1 class="title">Argostos</h1>
       <canvas
         class="world"
         id="world"

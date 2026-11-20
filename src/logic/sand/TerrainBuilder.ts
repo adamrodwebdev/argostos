@@ -38,7 +38,8 @@ export class TerrainBuilder {
         }
         const z = topZ - (y + 0.5) * cellM;
         if (z > surface) continue;
-        grid.place(i, Element.Sand, shadeOf(this.profile.stratum(worldX, z), random.nextInt(4)));
+        const stratum = this.profile.stratum(worldX, z, surface);
+        grid.place(i, Element.Sand, shadeOf(stratum, random.nextInt(4)));
       }
     }
     return grid;

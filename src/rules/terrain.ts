@@ -45,11 +45,12 @@ export class DuneProfile {
 
   /**
    * The stratum of the sand at (x, z): 0 at the top. The layers follow the dunes, flatter with
-   * depth, and wave a little on their own.
+   * depth, and wave a little on their own. `surface` is the dune's height at x, when the caller
+   * has it already (a column is laid from one height, not one per grain).
    */
-  stratum(x: number, z: number): number {
+  stratum(x: number, z: number, surface: number = this.height(x)): number {
     let depth = -z;
-    depth += 0.45 * this.height(x) * Math.max(0, 1 - depth / 40);
+    depth += 0.45 * surface * Math.max(0, 1 - depth / 40);
     depth += 0.35 * Math.sin(x / 5.5 + depth * 0.05);
     let band = 0;
     while (band < STRATA_DEPTHS.length && depth > STRATA_DEPTHS[band]!) band++;

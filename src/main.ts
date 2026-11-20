@@ -25,7 +25,7 @@ const options = readUrlOptions(window.location.search);
 async function boot(): Promise<void> {
   try {
     const { startGame } = await import('./game/GameApp');
-    startGame({ elements: { root, canvas, status, readout }, options, text, window });
+    await startGame({ elements: { root, canvas, status, readout }, options, text, window });
   } catch (error) {
     status.textContent = text.get('failed');
     status.hidden = false;

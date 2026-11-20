@@ -32,6 +32,12 @@ export interface PlaySetup {
   readonly ceiling: () => number;
 }
 
+/** A hunt's world and its events, made before its view. */
+export interface WorldPart {
+  readonly events: EventBus<HuntEventMap>;
+  readonly hunt: Hunt;
+}
+
 /** A different seed for the effects than the hunt's own: they never touch its chance. */
 const EFFECTS_SEED = 0x5eed;
 /** Each hunt number has its own desert (the first keeps the URL's seed). */
@@ -43,7 +49,7 @@ const SEED_STEP = 7919;
  * hunt (a listener, a hit-stop) reaches the next.
  */
 export class HuntPlay {
-  readonly events = new EventBus<HuntEventMap>();
+  readonly events: EventBus<HuntEventMap>;
   readonly hunt: Hunt;
   readonly view: GameView;
   readonly time = new TimeScale();
@@ -52,15 +58,28 @@ export class HuntPlay {
   private readonly player: SteeringIntent;
   private readonly idle = new IdleIntent();
 
-  constructor(setup: PlaySetup) {
-    const seed = (setup.seed + (setup.number - 1) * SEED_STEP) % 2_147_483_647;
-    this.hunt = new Hunt({
-      seed,
+  /** The hunt's world (its sand, hero, convoys): the longest part, built on its own. */
+  static world(setup: PlaySetup): WorldPart {
+    const events = new EventBus<HuntEventMap>();
+    const hunt = new Hunt({
+      seed: HuntPlay.seedOf(setup),
       detail: setup.detail,
       truck: setup.truck,
-      events: this.events,
+      events,
       number: setup.number,
     });
+    return { events, hunt };
+  }
+
+  private static seedOf(setup: PlaySetup): number {
+    return (setup.seed + (setup.number - 1) * SEED_STEP) % 2_147_483_647;
+  }
+
+  /** The hunt played from its world (`HuntPlay.world`), with its view. */
+  constructor(setup: PlaySetup, world: WorldPart) {
+    const seed = HuntPlay.seedOf(setup);
+    this.events = world.events;
+    this.hunt = world.hunt;
     this.autopilot = setup.autopilot ? new AutopilotIntent(this.hunt, STEP_SECONDS) : null;
     this.player = setup.player;
     this.view = new GameView({

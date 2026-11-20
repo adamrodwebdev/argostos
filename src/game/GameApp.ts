@@ -25,6 +25,7 @@ import { PointerInput } from '../platform/PointerInput';
 import { SpriteLoader } from '../platform/SpriteLoader';
 import { Stage } from '../platform/Stage';
 import { SynthSound } from '../platform/SynthSound';
+import { nextTask } from '../platform/tasks';
 import type { ActionId } from '../rules/combat';
 import { MAX_HUNT_NUMBER } from '../rules/hunts';
 import type { KeyCommand } from '../rules/keyInput';
@@ -33,7 +34,7 @@ import { readTruckManifest, type SpriteSet, type TruckManifest } from '../rules/
 import { encodeSession } from '../rules/sessionCode';
 import type { UrlOptions } from '../rules/urlOptions';
 import { fullThrottleDistance, pixelsPerMetre, playFrame } from '../rules/viewing';
-import { HuntPlay } from './HuntPlay';
+import { HuntPlay, type PlaySetup } from './HuntPlay';
 
 /** The build's own sprites, by the names the manifest gives them (never a URL built from data). */
 const SPRITE_URLS: ReadonlyMap<string, string> = new Map([
@@ -76,7 +77,8 @@ type GameState = 'playing' | 'ended' | 'paused';
  * handed down; nothing reaches for a global.
  */
 export class GameApp implements FrameTarget {
-  private play: HuntPlay;
+  /** The hunt being played: set by `open` before the loop starts, then by each new hunt. */
+  private play!: HuntPlay;
   private state: GameState = 'playing';
   /** Crystals earned in this session, before the hunt being played. */
   private banked = 0;
@@ -172,9 +174,19 @@ export class GameApp implements FrameTarget {
     this.loop = new FrameLoop(window, this);
     this.guardPage(elements);
     this.wireSound();
-    this.play = this.newPlay(options.hunt);
+  }
+
+  /**
+   * The first hunt, in two tasks (its world, then its view and the interface bound to it), so
+   * neither holds the page long while it starts.
+   */
+  async open(pause: () => Promise<void>): Promise<void> {
+    const setup = this.setup(this.start.options.hunt);
+    const world = HuntPlay.world(setup);
+    await pause();
+    this.play = this.adopt(new HuntPlay(setup, world));
     this.setState('playing');
-    this.log.huntBegun(options.hunt);
+    this.log.huntBegun(this.start.options.hunt);
   }
 
   run(): void {
@@ -227,8 +239,13 @@ export class GameApp implements FrameTarget {
   }
 
   private newPlay(number: number): HuntPlay {
+    const setup = this.setup(number);
+    return this.adopt(new HuntPlay(setup, HuntPlay.world(setup)));
+  }
+
+  private setup(number: number): PlaySetup {
     const { options } = this.start;
-    const play = new HuntPlay({
+    return {
       number,
       seed: options.seed,
       detail: options.detail,
@@ -241,7 +258,11 @@ export class GameApp implements FrameTarget {
       player: this.player,
       keepOut: () => this.hud.keepOut(),
       ceiling: () => this.hud.ceiling(),
-    });
+    };
+  }
+
+  /** A hunt to play: the interface bound to it, its events heard. */
+  private adopt(play: HuntPlay): HuntPlay {
     this.hud.bind(play.hunt, play.events);
     play.events.on('huntEnded', (outcome) => {
       this.ended(outcome);
@@ -252,7 +273,7 @@ export class GameApp implements FrameTarget {
       this.strikes++;
       this.start.elements.root.dataset.strikes = String(this.strikes);
     });
-    this.start.elements.root.dataset.hunt = String(number);
+    this.start.elements.root.dataset.hunt = String(play.hunt.number);
     return play;
   }
 
@@ -424,8 +445,15 @@ export class GameApp implements FrameTarget {
   }
 }
 
-export function startGame(start: GameStart): GameApp {
+/**
+ * Starts the game in a few tasks (the interface, the first hunt's world, its view), the page
+ * answering in between: no long task while it starts.
+ */
+export async function startGame(start: GameStart): Promise<GameApp> {
+  const pause = () => nextTask(start.window);
   const game = new GameApp(start);
+  await pause();
+  await game.open(pause);
   game.run();
   return game;
 }

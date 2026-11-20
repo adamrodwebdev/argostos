@@ -18,19 +18,18 @@ const RIM_STEP_M = 0.5;
  * at the grid's resolution, then scaled like the arena's sand.
  */
 export class OutsideSandPainter {
-  private readonly left: HTMLCanvasElement;
-  private readonly right: HTMLCanvasElement;
+  /** Each side's image, made the first time it shows (never on a phone, whose frame is all arena). */
+  private left: HTMLCanvasElement | null = null;
+  private right: HTMLCanvasElement | null = null;
+  private colours: SandColours | null = null;
   private readonly columns: number;
 
   constructor(
     private readonly profile: DuneProfile,
     private readonly measures: GridMeasures,
-    random: RandomSource,
+    private readonly random: RandomSource,
   ) {
     this.columns = Math.round(MARGIN_M / measures.cellM);
-    const colours = new SandColours(measures);
-    this.left = this.paint(-MARGIN_M, colours, random);
-    this.right = this.paint(ARENA.widthM, colours, random);
   }
 
   draw(context: CanvasRenderingContext2D, view: View): void {
@@ -38,8 +37,12 @@ export class OutsideSandPainter {
     const rightEdge = view.screenX(ARENA.widthM);
     if (leftEdge <= 0 && rightEdge >= view.widthPx) return;
     context.imageSmoothingEnabled = true;
-    if (leftEdge > 0) this.drawSide(context, view, { image: this.left, from: -MARGIN_M });
+    if (leftEdge > 0) {
+      this.left ??= this.paint(-MARGIN_M);
+      this.drawSide(context, view, { image: this.left, from: -MARGIN_M });
+    }
     if (rightEdge < view.widthPx) {
+      this.right ??= this.paint(ARENA.widthM);
       this.drawSide(context, view, { image: this.right, from: ARENA.widthM });
     }
   }
@@ -67,8 +70,11 @@ export class OutsideSandPainter {
   }
 
   /** One side's sand from `from` (m), at the grid's resolution: dunes, strata, bedrock. */
-  private paint(from: number, colours: SandColours, random: RandomSource): HTMLCanvasElement {
+  private paint(from: number): HTMLCanvasElement {
     const { cellM, rows, topZ, bedrockRows } = this.measures;
+    const { random } = this;
+    this.colours ??= new SandColours(this.measures);
+    const colours = this.colours;
     const canvas = document.createElement('canvas');
     canvas.width = this.columns;
     canvas.height = rows;
@@ -87,7 +93,8 @@ export class OutsideSandPainter {
         }
         const z = topZ - (y + 0.5) * cellM;
         if (z > surface) continue;
-        words[i] = colours.sandAt(y, shadeOf(this.profile.stratum(x, z), random.nextInt(4)));
+        const stratum = this.profile.stratum(x, z, surface);
+        words[i] = colours.sandAt(y, shadeOf(stratum, random.nextInt(4)));
       }
     }
     context.putImageData(pixels, 0, 0);
