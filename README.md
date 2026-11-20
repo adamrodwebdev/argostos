@@ -136,7 +136,7 @@ hero, trucks and particles follow as instanced quads; canvas 2D stays as the fal
 steps pass about 4 ms on a real phone, the simulation moves to a worker, its grid handed over
 in transferable buffers (portal iframes may refuse the headers a shared buffer needs).
 
-**Download**: the page 4.8 kB and its entry script 8.0 kB (2.0 and 3.5 kB gzipped), then the
+**Download**: the page 5.0 kB and its entry script 8.0 kB (2.1 and 3.5 kB gzipped), then the
 game, loaded after the first paint, 87.4 kB (30.8 kB gzipped), and one set of truck sprites per
 screen, 46.4 kB at 32 px per metre or 122.0 kB at 64 px per metre, fetched once the game runs.
 Nothing else is requested. **Start**: from a cold cache, on the emulated phone slowed 4× over a
