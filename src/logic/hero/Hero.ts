@@ -132,6 +132,8 @@ export class Hero {
     this.digging.dig(this.body, this.velocity);
     if (transition === Transition.Breach) {
       this.digging.burst(this.motion.x, this.motion.z, BURST.breach);
+      // A fast burst throws up what he carried: a mound round the hole.
+      this.digging.mound(this.motion.x, this.motion.z, Math.min(1, this.motion.speed / 14));
     } else if (transition === Transition.Dive) {
       this.digging.burst(this.motion.x, this.motion.z, BURST.dive);
     }
