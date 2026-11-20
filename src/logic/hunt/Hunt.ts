@@ -34,6 +34,7 @@ import { SprayPool } from '../sand/SprayPool';
 import { TerrainBuilder } from '../sand/TerrainBuilder';
 import { SwallowFromBelow } from '../takedown/SwallowFromBelow';
 import { TakedownRegistry } from '../takedown/Takedown';
+import { TheFall } from '../takedown/TheFall';
 import { Wreckage } from '../takedown/Wreckage';
 import type { Truck } from '../truck/Truck';
 import { TruckFleet } from '../truck/TruckFleet';
@@ -129,9 +130,10 @@ export class Hunt {
       events,
       stepSeconds: STEP_SECONDS,
       // A new takedown is one more strategy here (and its row in rules/takedowns.ts).
-      takedowns: new TakedownRegistry([new SwallowFromBelow()]),
+      takedowns: new TakedownRegistry([new SwallowFromBelow(), new TheFall()]),
       takedownWorld: {
         wreckage: this.wreckage,
+        ground: this.surface,
         thrower,
         events,
         random: seeds.fork(),

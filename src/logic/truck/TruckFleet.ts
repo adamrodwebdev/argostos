@@ -1,4 +1,5 @@
 import { brings, plainDamage } from '../../rules/combat';
+import { GROUND, landingDamage, pastLimit } from '../../rules/terrainTraps';
 import { CONVOY_SPACING_M, type PanicCause, type WaveRow } from '../../rules/hunts';
 import type { TruckGeometry } from '../../rules/truckManifest';
 import type { GlassDome } from '../actions/GlassDome';
@@ -36,7 +37,9 @@ const BITE_MARGIN_M = 0.6;
  * The Company's trucks in the arena, in convoys sent by the hunt's director. They patrol, flee
  * when alarmed, take hits, and are caught by the hero's jaws: a bite that brings a truck to zero
  * (or finds it stalled there) plays the takedown the registry picks; a bite that does not takes
- * plate off. A truck that drives out of the arena got away.
+ * plate off. The moving ground hurts them too: a hard landing in a pit takes plate off, and a
+ * truck that tips past its limit, lands very hard, or is finished by its landing falls (the fall
+ * takedown). A truck that drives out of the arena got away.
  */
 export class TruckFleet {
   private readonly trucks: Truck[] = [];
@@ -124,6 +127,8 @@ export class TruckFleet {
         truck.holdInGlass(held);
         if (this.hasLeft(truck)) {
           this.getAway(truck);
+        } else if (truck.hittable && this.groundTakes(truck)) {
+          continue;
         } else if (truck.canBeBitten && this.reaches(jaws)) {
           this.bite(truck, jaws, hero);
         }
@@ -144,6 +149,7 @@ export class TruckFleet {
     if (truck.isStalled || brings(truck.integrity.hp, damage.amount)) {
       const strike = {
         truck,
+        cause: 'bite' as const,
         jaws,
         heroVx: hero.velocityX,
         heroVz: hero.velocityZ,
@@ -158,6 +164,45 @@ export class TruckFleet {
     }
     this.options.combat.hit(truck, 'bite', damage);
     truck.restFromBite();
+  }
+
+  /**
+   * The ground's turn: a truck tipped past its limit, or landed in a pit. A hard landing takes
+   * plate off (its number shows); one that finishes it, one very hard, or a tip over: it falls.
+   * True when the truck fell (it is no longer on the sand).
+   */
+  private groundTakes(truck: Truck): boolean {
+    const { rig } = truck;
+    const landing = rig.landing;
+    const damage = landingDamage(landing);
+    const falls =
+      pastLimit(rig.groundTilt, GROUND.tipDeg) ||
+      landing >= GROUND.crashMps ||
+      (damage > 0 && brings(truck.integrity.hp, damage));
+    if (falls) {
+      this.fall(truck, landing);
+      return true;
+    }
+    if (damage > 0) this.options.combat.hit(truck, 'fall', { amount: damage, strong: false });
+    return false;
+  }
+
+  /** The fall takedown plays: the ground brought it down (the hero's undermining, credited). */
+  private fall(truck: Truck, landing: number): void {
+    const centre = this.box;
+    truck.bodyBox(centre);
+    const strike = {
+      truck,
+      cause: 'fall' as const,
+      jaws: { x: (centre.left + centre.right) / 2, z: centre.bottom, heading: 0 },
+      heroVx: 0,
+      heroVz: landing,
+      finale: this.isLastPrey(),
+    };
+    const strategy = this.options.takedowns.choose(strike);
+    if (!strategy) return;
+    this.takedowns.set(truck.id, strategy.begin(strike, this.options.takedownWorld));
+    this.panicConvoy(truck.waveId, 'attack');
   }
 
   /** The last truck standing once the director sent every convoy. */

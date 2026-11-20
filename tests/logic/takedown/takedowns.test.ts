@@ -43,6 +43,7 @@ function arena(seed: number) {
 function strikeOn(truck: Truck, rising: number): Strike {
   return {
     truck,
+    cause: 'bite',
     jaws: { x: truck.rig.rearX + 3, z: 1, heading: Math.PI / 2 },
     heroVx: 0,
     heroVz: rising,
@@ -173,6 +174,7 @@ describe('Takedowns: a strategy per takedown, chosen by the registry', () => {
     world.events.on('takedownBeat', (event) => beats.push(event.beat));
     const run = new SwallowFromBelow().begin(strikeOn(truck, 9), {
       wreckage: world.wreckage,
+      ground: world.surface,
       thrower: world.thrower,
       events: world.events,
       random: world.random,
@@ -208,6 +210,7 @@ describe('Takedowns: a strategy per takedown, chosen by the registry', () => {
     });
     const run = new SwallowFromBelow().begin(strikeOn(truck, 9), {
       wreckage: world.wreckage,
+      ground: world.surface,
       thrower: world.thrower,
       events: world.events,
       random: world.random,

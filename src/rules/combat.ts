@@ -6,7 +6,7 @@
  */
 
 /** What can hit a machine. */
-export const HIT_KINDS = ['bite', 'ram', 'tail', 'rock'] as const;
+export const HIT_KINDS = ['bite', 'ram', 'tail', 'rock', 'fall'] as const;
 export type HitKind = (typeof HIT_KINDS)[number];
 
 export interface HitRow {
@@ -22,6 +22,8 @@ export const HITS: ReadonlyMap<HitKind, HitRow> = new Map<HitKind, HitRow>([
   ['ram', { damage: 40, hitStopMs: 80, shake: 0.5 }],
   ['tail', { damage: 22, hitStopMs: 45, shake: 0.25 }],
   ['rock', { damage: 14, hitStopMs: 30, shake: 0.15 }],
+  // A machine's own fall: its damage comes from the landing (rules/terrainTraps); per m/s here.
+  ['fall', { damage: 9, hitStopMs: 60, shake: 0.4 }],
 ]);
 
 export function hitRow(kind: HitKind): HitRow {
@@ -86,7 +88,7 @@ export function ramDamage(speed: number): Damage {
 }
 
 /** Any other hit: its row's damage. */
-export function plainDamage(kind: Exclude<HitKind, 'ram'>): Damage {
+export function plainDamage(kind: Exclude<HitKind, 'ram' | 'fall'>): Damage {
   return { amount: hitRow(kind).damage, strong: false };
 }
 

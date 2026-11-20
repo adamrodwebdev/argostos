@@ -10,6 +10,7 @@ import { SprayPool } from '../../src/logic/sand/SprayPool';
 import { TerrainBuilder } from '../../src/logic/sand/TerrainBuilder';
 import { SwallowFromBelow } from '../../src/logic/takedown/SwallowFromBelow';
 import { TakedownRegistry } from '../../src/logic/takedown/Takedown';
+import { TheFall } from '../../src/logic/takedown/TheFall';
 import { Wreckage } from '../../src/logic/takedown/Wreckage';
 import type { Box, Jaws, Truck } from '../../src/logic/truck/Truck';
 import { TruckFleet } from '../../src/logic/truck/TruckFleet';
@@ -47,8 +48,15 @@ export function arena(seed: number) {
     arenaWidthM: ARENA.widthM,
     events,
     stepSeconds: STEP_SECONDS,
-    takedowns: new TakedownRegistry([new SwallowFromBelow()]),
-    takedownWorld: { wreckage, thrower, events, random: seeds.fork(), stepSeconds: STEP_SECONDS },
+    takedowns: new TakedownRegistry([new SwallowFromBelow(), new TheFall()]),
+    takedownWorld: {
+      wreckage,
+      ground: surface,
+      thrower,
+      events,
+      random: seeds.fork(),
+      stepSeconds: STEP_SECONDS,
+    },
     combat,
     dome,
   });

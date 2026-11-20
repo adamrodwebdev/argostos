@@ -7,6 +7,7 @@
 /** The takedowns that exist, and those planned (each needs its strategy before it is used). */
 export const TAKEDOWN_IDS = [
   'swallowFromBelow',
+  'fall',
   'dragUnder',
   'glassDome',
   'towerSink',
@@ -70,6 +71,31 @@ export const TAKEDOWNS: ReadonlyMap<TakedownId, TakedownRow> = new Map([
       plumeGrains: 110,
       plumeSpeed: 9,
       endsAt: 1.6,
+    },
+  ],
+  [
+    // The fall: a machine that tips over or lands hard breaks on the sand by itself, then the
+    // moving ground swallows it. Times from the crash; no jaws (lift is the crash's rebound).
+    'fall',
+    {
+      hitStopMs: 100,
+      shake: 0.75,
+      liftSpeed: 2.5,
+      tipSpeed: 2.4,
+      wheelsAt: 0.06,
+      wheelSpeed: 6.5,
+      wheelSpin: 8,
+      shatterAt: 0.1,
+      shards: 28,
+      fuelAt: 0.22,
+      burnSeconds: 3.4,
+      panels: 2,
+      foldFrom: 0.05,
+      foldTo: 0.45,
+      dragAt: 1.1,
+      plumeGrains: 90,
+      plumeSpeed: 6,
+      endsAt: 2.9,
     },
   ],
 ]);
