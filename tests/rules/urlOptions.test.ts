@@ -7,14 +7,38 @@ describe('readUrlOptions: the URL is an allow-list, read strictly', () => {
   });
 
   test('every option read when it is right', () => {
-    expect(readUrlOptions('?seed=2026&detail=fine&debug=1&autopilot=1&mute=1')).toEqual({
+    expect(
+      readUrlOptions('?seed=2026&detail=fine&debug=1&autopilot=1&mute=1&hunt=3&tester=1'),
+    ).toEqual({
       seed: 2026,
       detail: 'fine',
       debug: true,
       autopilot: true,
       mute: true,
+      hunt: 3,
+      tester: true,
     });
   });
+
+  test.each([
+    ['zero', '?hunt=0'],
+    ['past the last number read', '?hunt=100'],
+    ['a decimal', '?hunt=2.5'],
+    ['an exponent', '?hunt=1e1'],
+    ['letters after the digits', '?hunt=2b'],
+    ['negative', '?hunt=-2'],
+    ['twice', '?hunt=2&hunt=3'],
+    ['a name', '?hunt=__proto__'],
+  ])('a hunt that is %s plays the first hunt', (_case, query) => {
+    expect(readUrlOptions(query).hunt).toBe(1);
+  });
+
+  test.each(['?tester=true', '?tester=yes', '?tester=01', '?tester=1&tester=1'])(
+    'the tester switch %s stays off',
+    (query) => {
+      expect(readUrlOptions(query).tester).toBe(false);
+    },
+  );
 
   test('the largest seed is read, the smallest too', () => {
     expect(readUrlOptions('?seed=2147483647').seed).toBe(2_147_483_647);

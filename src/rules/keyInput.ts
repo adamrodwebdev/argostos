@@ -1,3 +1,5 @@
+import type { ActionId } from './combat';
+
 /*
  * The keys that steer, by their place on the keyboard (`KeyboardEvent.code`): the arrows, and
  * W A S D where a QWERTY has them, which are Z Q S D on an AZERTY. Looked up in a Map, never in
@@ -26,6 +28,20 @@ export const STEERING_KEYS: ReadonlyMap<string, KeyDirection> = new Map([
   ['KeyS', DOWN],
 ]);
 
+/** What a key asks besides steering: an action (Space, J, K) or the pause (P, never Escape). */
+export type KeyCommand = ActionId | 'pause';
+
+/**
+ * The keys of the actions, by their place on the keyboard: Space breathes the glass dome, J
+ * rams, K strikes (the roadmap's keyboard-only keys; the mouse has its two buttons), P pauses.
+ */
+export const COMMAND_KEYS: ReadonlyMap<string, KeyCommand> = new Map<string, KeyCommand>([
+  ['Space', 'breath'],
+  ['KeyJ', 'ram'],
+  ['KeyK', 'strike'],
+  ['KeyP', 'pause'],
+]);
+
 /** Keys whose default the page stops while playing (they would scroll a portal's page). */
 export const HELD_KEYS: ReadonlySet<string> = new Set([
   'ArrowLeft',
@@ -42,6 +58,12 @@ const MAX_CODE_LENGTH = 32;
 export function readSteeringKey(code: unknown): KeyDirection | null {
   if (typeof code !== 'string' || code.length > MAX_CODE_LENGTH) return null;
   return STEERING_KEYS.get(code) ?? null;
+}
+
+/** The command a key code asks, or null for any other code (or anything not a code). */
+export function readCommandKey(code: unknown): KeyCommand | null {
+  if (typeof code !== 'string' || code.length > MAX_CODE_LENGTH) return null;
+  return COMMAND_KEYS.get(code) ?? null;
 }
 
 /** True for a key the page keeps from scrolling (never Escape: it leaves fullscreen). */

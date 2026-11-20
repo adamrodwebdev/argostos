@@ -1,3 +1,4 @@
+import { MAX_HUNT_NUMBER } from './hunts';
 import { InvalidInput, orElse, parseNumber, readChoice, readText } from './input';
 import { GRID_DETAILS, type GridDetail } from './world';
 
@@ -18,6 +19,10 @@ export interface UrlOptions {
   readonly autopilot: boolean;
   /** The game starts muted (recordings, tests). */
   readonly mute: boolean;
+  /** The hunt to start with (tests, the review of a later hunt): 1 for a first visit. */
+  readonly hunt: number;
+  /** A remote tester's link: the pause shows the session code to send back. */
+  readonly tester: boolean;
 }
 
 export const DEFAULT_OPTIONS: UrlOptions = {
@@ -26,6 +31,8 @@ export const DEFAULT_OPTIONS: UrlOptions = {
   debug: false,
   autopilot: false,
   mute: false,
+  hunt: 1,
+  tester: false,
 };
 
 /** The longest query string read at all: what is longer is refused before parsing. */
@@ -33,6 +40,7 @@ export const MAX_QUERY_LENGTH = 512;
 /** The longest value of one option, once cleaned. */
 const MAX_VALUE_LENGTH = 16;
 const SEED = { min: 0, max: 2_147_483_647, integer: true } as const;
+const HUNT = { min: 1, max: MAX_HUNT_NUMBER, integer: true } as const;
 const SWITCH_ON = ['1'] as const;
 
 /** The one value of `key`, as cleaned text; refused when missing, repeated or too long. */
@@ -63,5 +71,7 @@ export function readUrlOptions(search: unknown): UrlOptions {
     debug: flag(params, 'debug'),
     autopilot: flag(params, 'autopilot'),
     mute: flag(params, 'mute'),
+    hunt: orElse(() => parseNumber(single(params, 'hunt'), HUNT, 'hunt'), DEFAULT_OPTIONS.hunt),
+    tester: flag(params, 'tester'),
   };
 }
