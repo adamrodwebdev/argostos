@@ -1,4 +1,5 @@
 import type { Hunt } from '../../logic/hunt/Hunt';
+import { EXIT_GROUND } from '../../rules/terrainTraps';
 import { ARENA } from '../../rules/world';
 import { create } from './dom';
 import { icon } from './icons';
@@ -40,6 +41,10 @@ export class Scanner {
     const land = create(document, 'i', { className: 'land' });
     const exitLeft = create(document, 'i', { className: 'exit l' });
     const exitRight = create(document, 'i', { className: 'exit r' });
+    // The striped exits are as wide as the rock under the gates.
+    for (const exit of [exitLeft, exitRight]) {
+      exit.style.width = `${percent(EXIT_GROUND.widthM).toFixed(2)}%`;
+    }
     this.window = create(document, 'i', { className: 'win' });
     this.element.append(land, exitLeft, exitRight, this.window);
     for (let i = 0; i < TRUCK_MARKS; i++) {

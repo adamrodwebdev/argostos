@@ -154,6 +154,7 @@
   top: 0;
   bottom: 0;
   width: 7px;
+  min-width: 7px;
   background: repeating-linear-gradient(135deg, #1b1b1b 0 4px, #f2a516 4px 8px);
 }
 .scan .exit.l {

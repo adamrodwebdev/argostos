@@ -1,5 +1,6 @@
 import { BURST } from '../../rules/digging';
 import { HERO_BODY, NOISE, noiseFor } from '../../rules/swimming';
+import { EXIT_GROUND } from '../../rules/terrainTraps';
 import type { SteeringIntent } from '../input/Steering';
 import type { GridProbe } from '../sand/GridProbe';
 import type { SandSurface } from '../sand/GridSurface';
@@ -59,9 +60,10 @@ export class Hero {
       ...start,
       radiusM,
       cellM,
+      // The rock under the exit gates is a wall to him, like the bedrock under the sand.
       bounds: {
-        minX: radiusM + 0.5,
-        maxX: columns * cellM - radiusM - 0.5,
+        minX: EXIT_GROUND.widthM + radiusM + 0.5,
+        maxX: columns * cellM - EXIT_GROUND.widthM - radiusM - 0.5,
         floorZ: bottomZ + bedrockRows * cellM + radiusM + 0.3,
       },
       probe: world.probe,

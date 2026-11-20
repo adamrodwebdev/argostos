@@ -1,9 +1,12 @@
+import { ARENA } from './world';
+
 /*
  * Terrain traps (the user's decision of 20 November): the ground itself is a weapon, in one
  * system with the sinking tower of the first minute. Argostos swimming just under the surface
  * lays back fewer grains behind him, so the ground caves in; machines on the moving ground tip
- * past a slope, fall into pits, get stuck in loose sand, and take damage from their falls. Data
- * rows and pure functions only; the desert still keeps every grain.
+ * past a slope, fall into pits, get stuck in loose sand, and take damage from their falls. The
+ * Company's exit gates stand on rock: no trap forms there. Data rows and pure functions only;
+ * the desert still keeps every grain.
  */
 
 /** Undermining: a shallow pass leaves a void the sand above falls into. */
@@ -39,6 +42,23 @@ export const GROUND = {
   /** A landing this hard (m/s), a fall of about 3.2 m, breaks the machine: the fall. */
   crashMps: 9.5,
 } as const;
+
+/**
+ * The ground under the exit gates (the user's decision of 20 November): the Company builds its
+ * gates on rock, from the sand's top down to the bedrock, so nothing there can be undermined, no
+ * pit or cave-in forms, and a fleeing truck always reaches its gate unless Argostos stops it.
+ */
+export const EXIT_GROUND = {
+  /** From each gate inward (m): less than the patrols' turn-back margin (14 m). */
+  widthM: 10,
+  /** The first of the four shades of its rock (the bedrock's are 0 to 3): drawn as concrete. */
+  firstShade: 4,
+} as const;
+
+/** True over the rock under an exit gate: within `EXIT_GROUND.widthM` of either exit. */
+export function onExitRock(x: number): boolean {
+  return Number.isFinite(x) && (x < EXIT_GROUND.widthM || x > ARENA.widthM - EXIT_GROUND.widthM);
+}
 
 /** The drilling tower of the first minute: tall, standing on a wide base on the sand. */
 export const TOWER = {

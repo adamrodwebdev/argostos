@@ -1,4 +1,5 @@
 import type { Truck } from '../../logic/truck/Truck';
+import { EXIT_GROUND } from '../../rules/terrainTraps';
 import { ARENA } from '../../rules/world';
 import type { View } from '../View';
 
@@ -10,6 +11,9 @@ export interface ArenaMarksOptions {
 
 /** The exit gates' poles: their height (m) in blocks of one metre, and their light. */
 const GATE_BLOCKS = 9;
+/** The striped kerb along the top of the concrete under a gate: blocks this long, this thick (m). */
+const KERB_BLOCK_M = 1;
+const KERB_M = 0.4;
 /** Ripples under a driving truck: how many, how far they spread (m), how often (s). */
 const RIPPLES = 3;
 const RIPPLE_REACH_M = 6;
@@ -17,8 +21,9 @@ const RIPPLE_PERIOD_S = 1.3;
 
 /**
  * Marks of the hunt drawn in the world: the two exits, striped poles with a cyan light at the
- * arena's ends (where a prey gets away, the scanner shows them too), and the vibrations every
- * driving truck sends through the sand under it (the first hunt's hint: follow them).
+ * arena's ends (where a prey gets away, the scanner shows them too) standing on the Company's
+ * concrete, its top edged with a striped kerb, and the vibrations every driving truck sends
+ * through the sand under it (the first hunt's hint: follow them).
  */
 export class ArenaMarksPainter {
   private time = 0;
@@ -61,7 +66,38 @@ export class ArenaMarksPainter {
 
   /** The two exits. */
   drawGates(context: CanvasRenderingContext2D, view: View): void {
-    for (const x of GATES) this.drawGate(context, view, x);
+    for (const [x, inward] of GATES) {
+      this.drawKerb(context, view, { x, inward });
+      this.drawGate(context, view, x);
+    }
+  }
+
+  /** The striped kerb along the concrete's top, from the gate to its inner edge. */
+  private drawKerb(
+    context: CanvasRenderingContext2D,
+    view: View,
+    gate: { readonly x: number; readonly inward: 1 | -1 },
+  ): void {
+    const { ground } = this.options;
+    const thick = KERB_M * view.scale;
+    const blocks = Math.round(EXIT_GROUND.widthM / KERB_BLOCK_M);
+    for (let i = 0; i < blocks; i++) {
+      const x0 = gate.x + gate.inward * i * KERB_BLOCK_M;
+      const x1 = x0 + gate.inward * KERB_BLOCK_M;
+      const sx0 = view.screenX(x0);
+      const sx1 = view.screenX(x1);
+      if (Math.max(sx0, sx1) < 0 || Math.min(sx0, sx1) > view.widthPx) continue;
+      const sy0 = view.screenY(ground(x0));
+      const sy1 = view.screenY(ground(x1));
+      context.fillStyle = i % 2 === 0 ? '#e8a21a' : '#1c1c1c';
+      context.beginPath();
+      context.moveTo(sx0, sy0);
+      context.lineTo(sx1, sy1);
+      context.lineTo(sx1, sy1 + thick);
+      context.lineTo(sx0, sy0 + thick);
+      context.closePath();
+      context.fill();
+    }
   }
 
   private drawGate(context: CanvasRenderingContext2D, view: View, x: number): void {
@@ -90,4 +126,8 @@ export class ArenaMarksPainter {
   }
 }
 
-const GATES: readonly number[] = [0, ARENA.widthM];
+/** The gates, and which way the arena lies from each. */
+const GATES: readonly (readonly [number, 1 | -1])[] = [
+  [0, 1],
+  [ARENA.widthM, -1],
+];

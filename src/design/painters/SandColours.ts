@@ -3,6 +3,7 @@ import type { GridMeasures } from '../../rules/world';
 import { stratumOf } from '../../logic/sand/TerrainBuilder';
 import {
   DEPTH_SHADOW,
+  FOUNDATION,
   GRAIN_CONTRAST,
   ROCK,
   SAND_DEPTH_STOPS,
@@ -12,6 +13,8 @@ import {
 
 /** Shades a grain may carry: 16 strata × 4 grains. */
 export const SHADES = 64;
+/** Shades of rock: the bedrock's four, then the four of the concrete under the exit gates. */
+const ROCK_SHADES = 8;
 
 /** A colour packed for an `ImageData` seen as 32-bit words (little-endian: ABGR). */
 function pack({ r, g, b }: Rgb, light: number): number {
@@ -38,9 +41,10 @@ function stratumDepth(stratum: number): number {
 }
 
 /**
- * The colours of the sand and the bedrock, by row of the grid (the light fades with depth) and
- * by shade (a grain's stratum and its own small variation): made once, packed for image data.
- * The arena's sand and the desert past its exits share them, so the two meet without a seam.
+ * The colours of the sand and the rock, by row of the grid (the light fades with depth) and by
+ * shade (a grain's stratum and its own small variation; the bedrock, or the Company's concrete
+ * under the exit gates): made once, packed for image data. The arena's sand and the desert past
+ * its exits share them, so the two meet without a seam.
  */
 export class SandColours {
   private readonly sand: Uint32Array;
@@ -49,7 +53,7 @@ export class SandColours {
   constructor(measures: GridMeasures) {
     const { rows, cellM, topZ, bottomZ } = measures;
     this.sand = new Uint32Array(rows * SHADES);
-    this.rock = new Uint32Array(rows * 4);
+    this.rock = new Uint32Array(rows * ROCK_SHADES);
     for (let y = 0; y < rows; y++) {
       const z = topZ - (y + 0.5) * cellM;
       const light = 1 - DEPTH_SHADOW * Math.min(1, Math.max(0, -z / -bottomZ));
@@ -63,7 +67,11 @@ export class SandColours {
         );
       }
       for (let grain = 0; grain < 4; grain++) {
-        this.rock[y * 4 + grain] = pack(ROCK, light * (1 + (grain - 1.5) * 0.04));
+        this.rock[y * ROCK_SHADES + grain] = pack(ROCK, light * (1 + (grain - 1.5) * 0.04));
+        this.rock[y * ROCK_SHADES + 4 + grain] = pack(
+          FOUNDATION,
+          light * (1 + (grain - 1.5) * 0.03),
+        );
       }
     }
   }
@@ -73,8 +81,8 @@ export class SandColours {
     return this.sand[y * SHADES + shade]!;
   }
 
-  /** Bedrock of `grain` (0 to 3) on row `y`. */
-  rockAt(y: number, grain: number): number {
-    return this.rock[y * 4 + (grain & 3)]!;
+  /** Rock of `shade` on row `y`: the bedrock (0 to 3) or the gates' concrete (4 to 7). */
+  rockAt(y: number, shade: number): number {
+    return this.rock[y * ROCK_SHADES + (shade & (ROCK_SHADES - 1))]!;
   }
 }
