@@ -20,6 +20,23 @@ export const VIEW = {
   throttleShare: 0.3,
 } as const;
 
+/** How the camera frames the hunt (m, and shares of the view's height). */
+export const CAMERA = {
+  /**
+   * The highest the camera may show (m above the mean surface). A phone held upright shows
+   * about 60 m of height: with the sky this high, a takedown at the surface can sit mid-screen
+   * with room above it for what it throws.
+   */
+  skyTopM: 44,
+  /** While a takedown plays, the view's centre sits this share of its height above the bite. */
+  takedownHeadroom: 0.08,
+} as const;
+
+/** The height (m) the camera centres on to frame a takedown at `z`, in a view `heightM` tall. */
+export function takedownCentreZ(z: number, heightM: number): number {
+  return z + CAMERA.takedownHeadroom * heightM;
+}
+
 export interface Rect {
   readonly x: number;
   readonly y: number;

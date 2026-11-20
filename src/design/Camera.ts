@@ -1,3 +1,4 @@
+import { CAMERA, takedownCentreZ } from '../rules/viewing';
 import { ARENA } from '../rules/world';
 import type { View, ViewLayout } from './View';
 
@@ -7,6 +8,8 @@ export interface Followed {
   readonly z: number;
   readonly velocityX: number;
   readonly velocityZ: number;
+  /** A takedown plays there: framed mid-screen, room above it for what it throws. */
+  readonly takedown?: boolean;
 }
 
 export interface CameraOptions {
@@ -18,11 +21,11 @@ export interface CameraOptions {
   readonly reducedMotion: boolean;
 }
 
-/** The highest the camera shows (m): room for a leap over the dunes. */
-const SKY_TOP_Z = 16;
 /** How quickly the camera catches up (per second), across and up and down. */
 const FOLLOW_X = 4;
 const FOLLOW_Z = 2.5;
+/** Up and down, it reaches a takedown faster: the bite comes while it still follows the rise. */
+const FOLLOW_TAKEDOWN_Z = 7;
 /** It looks ahead of the hero by this long of his (smoothed) motion, this far at most (m). */
 const LOOK_AHEAD_S = 0.45;
 const LOOK_AHEAD_MAX_M = 7;
@@ -58,20 +61,25 @@ export class Camera {
     this.trauma = Math.min(1, this.trauma + amount);
   }
 
-  /** Follows the hero for a frame of `dt` seconds, then frames the view. */
+  /** Follows the hero (or a takedown) for a frame of `dt` seconds, then frames the view. */
   frame(followed: Followed, layout: ViewLayout, dt: number): void {
     const lead = 1 - Math.exp(-LEAD_SMOOTHING * dt);
     this.leadX += (followed.velocityX - this.leadX) * lead;
     this.leadZ += (followed.velocityZ - this.leadZ) * lead;
+    const takedown = followed.takedown === true;
+    const aimZ = takedown
+      ? takedownCentreZ(followed.z, layout.frame.height / layout.cssPpm)
+      : followed.z + clampLead(this.leadZ * LOOK_AHEAD_S * 0.5);
     const tx = this.withinX(followed.x + clampLead(this.leadX * LOOK_AHEAD_S), layout);
-    const tz = this.withinZ(followed.z + clampLead(this.leadZ * LOOK_AHEAD_S * 0.5), layout);
+    const tz = this.withinZ(aimZ, layout);
     if (!this.started) {
       this.x = tx;
       this.z = tz;
       this.started = true;
     } else {
+      const followZ = takedown ? FOLLOW_TAKEDOWN_Z : FOLLOW_Z;
       this.x += (tx - this.x) * (1 - Math.exp(-FOLLOW_X * dt));
-      this.z += (tz - this.z) * (1 - Math.exp(-FOLLOW_Z * dt));
+      this.z += (tz - this.z) * (1 - Math.exp(-followZ * dt));
     }
     this.clock += dt;
     this.trauma = Math.max(0, this.trauma - TRAUMA_FADE * dt);
@@ -97,8 +105,8 @@ export class Camera {
     const half = layout.frame.height / layout.cssPpm / 2;
     const { bottomZ } = this.options;
     const low = bottomZ + half;
-    const high = SKY_TOP_Z - half;
-    if (low >= high) return (bottomZ + SKY_TOP_Z) / 2;
+    const high = CAMERA.skyTopM - half;
+    if (low >= high) return (bottomZ + CAMERA.skyTopM) / 2;
     return Math.max(low, Math.min(high, z));
   }
 }

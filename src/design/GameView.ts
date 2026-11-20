@@ -62,7 +62,7 @@ export class GameView {
   private readonly takedowns: TakedownEffects;
   private readonly box: Box = { left: 0, right: 0, bottom: 0, top: 0 };
   private readonly ground: (x: number) => number;
-  private readonly focus = { x: 0, z: 0, velocityX: 0, velocityZ: 0 };
+  private readonly focus = { x: 0, z: 0, velocityX: 0, velocityZ: 0, takedown: true };
 
   constructor(private readonly options: GameViewOptions) {
     const { hunt, random, reducedMotion, events } = options;
@@ -138,8 +138,9 @@ export class GameView {
   }
 
   /**
-   * What the camera frames: the hero, or, while a takedown plays, the hero and the wreck together
-   * (the moment stays on screen while he dives away with it).
+   * What the camera frames: the hero, or, while a takedown plays, the wreck mid-screen with the
+   * sky above it for what it throws, the hero beside it (the moment stays on screen while he
+   * dives away with it).
    */
   private framed(): Followed {
     const { hero, trucks } = this.options.hunt;
@@ -147,9 +148,7 @@ export class GameView {
     if (!caught) return hero;
     const focus = this.focus;
     focus.x = (hero.x + caught.wreck.x) / 2;
-    focus.z = (hero.z + caught.wreck.z) / 2;
-    focus.velocityX = 0;
-    focus.velocityZ = 0;
+    focus.z = caught.wreck.z;
     return focus;
   }
 
