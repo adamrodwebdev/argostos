@@ -48,9 +48,10 @@ P2, the hunt:
   only part of his wake refilled, and the ground over his pass caves in, about a metre each
   time; the sand he keeps flies out round the hole at his next fast burst (the desert still
   keeps every grain). A truck over a cave-in or a pit falls: its tyres drop freely and land at
-  the speed of their fall, a hard landing takes plate off (its number shows), a deep fall or a
-  tilt past 34° plays **the fall**, a takedown of its own (the wreck tumbles, breaks and sinks).
-  At a wall too steep to climb a truck is stuck, its wheels spinning in a spray of dust.
+  the speed of their fall. One pass's cave-in only jolts it; a fall of more than about 1.5 m
+  takes plate off (its number shows), and a fall of about 3 m or a nose-dive past 30° plays
+  **the fall**, a takedown of its own (the wreck tumbles, breaks and sinks). At a wall too steep
+  to climb a truck is stuck, its wheels spinning in a spray of dust.
 - **The drilling tower** of the first minute (and one in each later hunt): built level on the
   dunes, it leans as the sand under one side of its base drops, and past 6° it topples: its
   cables snap in sparks, it crashes on the dunes, twists and sinks. Its plate (200, a bar) can
@@ -167,17 +168,22 @@ and sound come from the beats it emits. **A new action** is an `ActionStrategy` 
 Measured on 20 November 2026 with `npm run frame-time` on the production build, in headless
 Chrome on the development laptop (Ryzen 7 8845HS). The phones are emulated, with the processor
 slowed 4× (roughly a mid-range phone). Mean / 95th percentile, in ms, with the autopilot hunting
-(digging, hits, rocks, domes, drones, takedowns).
+(digging, undermining a tower, hits, rocks, domes, drones, takedowns, cave-ins).
 
 | Scenario                    | Viewport         | Sand cells | Frame interval | Hunt steps  | Drawing     |
 | --------------------------- | ---------------- | ---------- | -------------- | ----------- | ----------- |
-| Desktop                     | 1280 × 800 @1    | 158,720    | 6.1 / 6.2      | 0.14 / 0.30 | 0.40 / 0.50 |
-| Desktop, DPR 2              | 1280 × 800 @2    | 158,720    | 6.1 / 6.2      | 0.14 / 0.30 | 0.46 / 0.70 |
-| Phone                       | 390 × 844 @2.625 | 158,720    | 16.7 / 18.3    | 0.16 / 0.30 | 0.49 / 0.90 |
-| Phone, CPU 4×               | 390 × 844 @2.625 | 158,720    | 16.7 / 18.3    | 0.60 / 1.00 | 1.97 / 3.00 |
-| Phone, CPU 4×, hunt 3       | 390 × 844 @2.625 | 158,720    | 16.7 / 18.3    | 0.70 / 1.30 | 2.42 / 4.50 |
-| Small phone, CPU 4×, hunt 3 | 320 × 568 @2     | 158,720    | 16.7 / 18.3    | 0.71 / 1.30 | 2.38 / 4.40 |
-| Phone, CPU 4×, fine sand    | 390 × 844 @2.625 | 248,000    | 16.7 / 18.3    | 0.75 / 1.20 | 2.01 / 3.10 |
+| Desktop                     | 1280 × 800 @1    | 158,720    | 6.1 / 6.1      | 0.19 / 0.30 | 0.64 / 1.10 |
+| Desktop, DPR 2              | 1280 × 800 @2    | 158,720    | 6.1 / 6.1      | 0.18 / 0.30 | 0.58 / 0.90 |
+| Phone                       | 390 × 844 @2.625 | 158,720    | 16.7 / 18.3    | 0.21 / 0.40 | 0.64 / 1.00 |
+| Phone, CPU 4×               | 390 × 844 @2.625 | 158,720    | 16.7 / 18.3    | 0.85 / 1.30 | 2.64 / 4.30 |
+| Phone, CPU 4×, hunt 3       | 390 × 844 @2.625 | 158,720    | 16.7 / 18.3    | 0.93 / 1.30 | 2.95 / 4.00 |
+| Small phone, CPU 4×, hunt 3 | 320 × 568 @2     | 158,720    | 16.7 / 18.3    | 1.02 / 1.80 | 3.00 / 4.40 |
+| Phone, CPU 4×, fine sand    | 390 × 844 @2.625 | 248,000    | 16.7 / 18.3    | 1.07 / 1.70 | 2.77 / 4.10 |
+
+The terrain's traps cost about a third more steps and drawing than before them (more sand
+moving as the ground caves in, more chunks redrawn, the towers); one run out of two showed a
+single late stretch in hunt 3 on the slowed phone (95th percentile 24.3 ms for the frame, 10.2
+for the drawing) that the second run did not repeat.
 
 The desktop runs at the laptop's 165 Hz. Phones are capped at 60 frames a second, and on a
 165 Hz screen a frame then lasts two or three refreshes of 6.06 ms: hence 16.7 / 18.3 when
@@ -196,8 +202,8 @@ over in transferable buffers (portal iframes may refuse the headers a shared buf
 **Lighthouse**, production build, worst of three runs: 100 in all four categories on mobile and
 on desktop. The first paint is the page's own title; the game starts in three short tasks.
 
-**Download**: the page 4.1 kB and its entry script 10.5 kB (1.9 and 4.5 kB gzipped), then the
-game, loaded after the first paint, 147.5 kB of script and 12.6 kB of style (49.9 and 3.6 kB
+**Download**: the page 4.1 kB and its entry script 10.7 kB (1.9 and 4.5 kB gzipped), then the
+game, loaded after the first paint, 164.3 kB of script and 12.6 kB of style (55.1 and 3.6 kB
 gzipped), and one set of truck sprites per screen, 46.4 kB at 32 px per metre or 122.0 kB at
 64 px per metre, fetched once the game runs. Nothing else is requested.
 
