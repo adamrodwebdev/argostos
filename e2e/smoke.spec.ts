@@ -38,7 +38,7 @@ test.describe('the game loads, draws and stays clean', () => {
     await page.goto('/?autopilot=1&mute=1');
     await expect(page.getByRole('heading', { level: 1, name: 'Argostos' })).toBeAttached();
     await expect(page.locator('#game')).toHaveAttribute('data-state', 'playing');
-    await expect(page.getByRole('status')).toBeHidden();
+    await expect(page.locator('#status')).toBeHidden();
     await expect.poll(() => coloursOnCanvas(page)).toBeGreaterThan(20);
     // The world moves on: two samples a moment apart are not the same picture.
     const first = await page.locator('#world').screenshot();
@@ -65,35 +65,23 @@ test.describe('the game loads, draws and stays clean', () => {
     expect(layout.bodyTouch).not.toBe('none');
   });
 
-  test('the sound toggle is a named 48 px button that mutes and unmutes', async ({ page }) => {
-    await page.goto('/');
-    const toggle = page.getByRole('button', { name: 'Mute the sound' });
-    await expect(toggle).toBeVisible();
-    const box = await toggle.boundingBox();
-    expect(box?.width).toBeGreaterThanOrEqual(48);
-    expect(box?.height).toBeGreaterThanOrEqual(48);
-    await expect(toggle).toHaveAttribute('aria-pressed', 'false');
-    await toggle.click();
-    await expect(toggle).toHaveAttribute('aria-pressed', 'true');
-    await toggle.click();
-    await expect(toggle).toHaveAttribute('aria-pressed', 'false');
-  });
-
-  test('on a window wider than 2:1 the controls stay inside the centred 2:1 frame', async ({
+  test('on a window wider than 2:1 the interface stays inside the centred 2:1 frame', async ({
     page,
   }, testInfo) => {
     test.skip(testInfo.project.name !== 'desktop', 'one wide desktop window is enough');
     await page.setViewportSize({ width: 2560, height: 1080 });
-    await page.goto('/?mute=1');
+    await page.goto('/?mute=1&hunt=3');
     await expect(page.locator('#game')).toHaveAttribute('data-state', 'playing');
     const frame = playFrame(2560, 1080);
-    const box = await page.getByRole('button', { name: 'Mute the sound' }).boundingBox();
-    const right = box && box.x + box.width;
-    expect(box?.x).toBeGreaterThanOrEqual(frame.x);
-    expect(right).toBeLessThanOrEqual(frame.x + frame.width);
+    for (const name of ['Pause', 'Ram', /^Strike/, 'Breathe glass'] as const) {
+      const box = await page.getByRole('button', { name }).boundingBox();
+      const right = box && box.x + box.width;
+      expect(box?.x).toBeGreaterThanOrEqual(frame.x);
+      expect(right).toBeLessThanOrEqual(frame.x + frame.width);
+    }
   });
 
-  test('the cursor says what can be clicked: an aim on the play area, a hand on the button', async ({
+  test('the cursor says what can be clicked: an aim on the play area, a hand on a button', async ({
     page,
   }) => {
     await page.goto('/?mute=1');
@@ -101,7 +89,7 @@ test.describe('the game loads, draws and stays clean', () => {
     const cursors = await page.evaluate(() => ({
       page: getComputedStyle(document.documentElement).cursor,
       canvas: getComputedStyle(document.querySelector('#world')!).cursor,
-      button: getComputedStyle(document.querySelector('#sound')!).cursor,
+      button: getComputedStyle(document.querySelector('.hud .pause')!).cursor,
     }));
     expect(cursors).toEqual({ page: 'default', canvas: 'crosshair', button: 'pointer' });
   });

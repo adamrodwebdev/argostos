@@ -1,4 +1,5 @@
 import type { HuntEvents, TakedownBeat, TakedownBeatEvent } from '../../logic/hunt/HuntEvents';
+import { machineRow } from '../../rules/machines';
 import { FINALE, TAKEDOWNS } from '../../rules/takedowns';
 import type { Effects } from '../fx/Effects';
 import type { FireSources } from '../fx/FireSources';
@@ -83,10 +84,9 @@ export class TakedownEffects {
   private strike(event: TakedownBeatEvent): void {
     const { effects, camera, time, sound } = this.options;
     const row = TAKEDOWNS.get(event.takedown);
-    if (row) {
-      time.hold(row.hitStopMs);
-      camera.jolt(row.shake * event.strength);
-    }
+    // The heavier the machine, the longer the world stands still (60 to 120 ms).
+    time.hold(machineRow(event.machine).hitStopMs);
+    if (row) camera.jolt(row.shake * event.strength);
     if (event.finale) time.slow(FINALE.scale, FINALE.seconds * 1000);
     sound.play('impact', event.strength);
     sound.play('sandBurst', event.strength * 0.8);

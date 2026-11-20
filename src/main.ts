@@ -18,15 +18,14 @@ const root = element('#game', HTMLElement);
 const canvas = element('#world', HTMLCanvasElement);
 const status = element('#status', HTMLElement);
 const readout = element('#readout', HTMLElement);
-const sound = element('#sound', HTMLButtonElement);
 canvas.setAttribute('aria-label', text.get('canvas'));
 status.textContent = text.get('loading');
-const options = readUrlOptions(window.location.search);
+const options = readUrlOptions(window.location.search, window.location.hash);
 
 async function boot(): Promise<void> {
   try {
     const { startGame } = await import('./game/GameApp');
-    startGame({ elements: { root, canvas, status, readout, sound }, options, text, window });
+    await startGame({ elements: { root, canvas, status, readout }, options, text, window });
   } catch (error) {
     status.textContent = text.get('failed');
     status.hidden = false;

@@ -31,3 +31,56 @@ and versions follow [Semantic Versioning](https://semver.org/).
   - typed readers at every door (URL options, pointer and touch, keys, the sprite manifest and
     files) with tables of hostile inputs in the tests;
   - scripts to measure the frame time and to film a takedown frame by frame.
+- Prototype milestone P2:
+  - hunts as data rows played by a director: convoys and drones on time, actions unlocked on
+    time (hunt 1: the breath at 20 s; hunt 2: the ram; hunt 3: the strike), a success once every
+    convoy is taken, a failure when a prey drives out of an exit;
+  - combat in numbers: machines with plate from their rows (a list of parts, the body for now),
+    one-bite prey without a life bar, a bar on the armoured truck and the drone, a number over
+    the machine at every hit, placed by rule (under the top row, never over Argostos or a
+    button) and grouped when hits come close; a machine at zero stalls until the bite that
+    finishes it; the hit-stop weighed by the machine;
+  - the actions as strategies in a registry: the ram (a burst, a strong hit at full speed, its
+    cooldown a sweep), the strike (a tail slap up close, a rock flung at range, its icon by
+    range), the breath (a glass dome that holds the trucks, its gauge refilled by eating);
+  - convoys that patrol, turn back before the exits, and flee when alarmed by the sonar or an
+    attack, as their row says; armoured trucks with steel plates;
+  - sonar drones that hear a loud hero (cyan rings against his amber ones), mark and follow him,
+    and fall to rocks or a leaping bite; the scanner of the arena in the top row;
+  - the hunt's interface from the validated mockup: the top row, "Spotted", the first hunt's
+    hint, the right thumb's cluster (54 to 96 px, never in the left half) with key hints on a
+    computer (a fine pointer and no touch screen; off at the first finger), the end screen (crystals, machines taken, three stars, Next hunt and Replay) and
+    the failure screen (why, the crystals kept, a four-word tip, Try again), the pause;
+  - the mouse's buttons (ram, strike) and the keys Space, J, K and P;
+  - a takedown framed mid-screen on a phone held upright, the sky above it;
+  - the desert past the exits drawn with the arena's strata on wide windows, and the exits'
+    striped poles;
+  - a session log for remote testers, read as a 16-character code (no personal data, nothing
+    stored or sent), and `npm run session-code` to read one;
+  - a place for the runes to come: the hero's recent path, a rune port, empty rune and relic
+    tables;
+  - the end-to-end tests in Chrome, Firefox and WebKit (`E2E_ENGINE`; the CI plays all three),
+    the overflow sweep from 320 to 2560 px, and `npm run lighthouse` (worst of three runs);
+  - the terrain's traps, from one data file: undermining (a shallow pass refills only part of
+    its wake, the ground caves in, every grain kept, the rest thrown out at the next burst);
+    trucks on moving ground (tyres that fall freely and land, landing damage shown as a hit, a
+    stop at walls too steep, stuck wheels spinning in dust); the fall, a takedown strategy with
+    its own row, sharing the wreck's breakup with the bite; the drilling tower of the first
+    minute and of each hunt, which leans with the sand, topples past 6°, snaps its cables,
+    crashes, twists and sinks, or falls when its plate is gone, drawn in code, with its bar and
+    its mark on the scanner;
+  - the autopilot undermines a standing tower when no truck is left (hunt 1: it falls at 8 s,
+    crashes at about 10 s), and a second bot style, the sapper (`bot=sapper`), digs sinkholes in
+    the trucks' way; `takedown-shots` films with either bot, and from a lead before the
+    takedown;
+  - the exit gates stand on rock (the user's decision): the last 10 m before each gate are the
+    Company's concrete down to the bedrock, a wall to Argostos, edged with a striped kerb; no pit
+    or cave-in forms there, so a fleeing truck reaches its gate unless he stops it first;
+  - the tester's and our filming flags also read from the URL's hash (`#tester`, `#autopilot`,
+    `#sapper`), for links that carry no query string, through the same allow-list.
+
+### Changed
+
+- The first paint is the game's title; the game starts in three short tasks (Lighthouse: 100 in
+  the four categories, mobile and desktop).
+- The sound's on/off moves into the pause.

@@ -81,6 +81,10 @@ export class SynthSound implements SoundPort {
       ['whoosh', (context, s) => this.whoosh(context, s)],
       ['crackle', (context, s) => this.crackle(context, s)],
       ['sandBurst', (context, s) => this.sandBurst(context, s)],
+      ['ping', (context, s) => this.ping(context, s)],
+      ['alarm', (context, s) => this.alarm(context, s)],
+      ['chime', (context, s) => this.chime(context, s)],
+      ['swish', (context, s) => this.swish(context, s)],
     ]);
 
   /** A deep thump: a sine falling from 140 to 38 Hz, and a muffled thud of noise. */
@@ -212,6 +216,92 @@ export class SynthSound implements SoundPort {
       at: 0,
     });
     return 0.6;
+  }
+
+  /** The sonar: a soft sine falling from 1500 to 900 Hz, and its faint echo. */
+  private ping(context: AudioContext, s: number): number {
+    const now = context.currentTime;
+    for (const [at, level] of [
+      [0, 1],
+      [0.18, 0.35],
+    ] as const) {
+      const tone = context.createOscillator();
+      tone.type = 'sine';
+      tone.frequency.setValueAtTime(1500, now + at);
+      tone.frequency.exponentialRampToValueAtTime(900, now + at + 0.25);
+      const gain = context.createGain();
+      gain.gain.setValueAtTime(0.0001, now + at);
+      gain.gain.exponentialRampToValueAtTime(0.18 * s * level, now + at + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + at + 0.3);
+      gain.connect(this.master!);
+      tone.connect(gain);
+      tone.start(now + at);
+      tone.stop(now + at + 0.32);
+    }
+    return 0.55;
+  }
+
+  /** Spotted: two quick bright tones, high then higher. */
+  private alarm(context: AudioContext, s: number): number {
+    const now = context.currentTime;
+    for (const [at, frequency] of [
+      [0, 880],
+      [0.12, 1320],
+    ] as const) {
+      const tone = context.createOscillator();
+      tone.type = 'square';
+      tone.frequency.value = frequency;
+      const filter = context.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.value = 2600;
+      const gain = context.createGain();
+      gain.gain.setValueAtTime(0.0001, now + at);
+      gain.gain.exponentialRampToValueAtTime(0.16 * s, now + at + 0.008);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + at + 0.11);
+      tone.connect(filter);
+      filter.connect(gain);
+      gain.connect(this.master!);
+      tone.start(now + at);
+      tone.stop(now + at + 0.12);
+    }
+    return 0.3;
+  }
+
+  /** The glass dome forming: a few glassy partials ringing out. */
+  private chime(context: AudioContext, s: number): number {
+    const now = context.currentTime;
+    for (const [frequency, level] of [
+      [1046, 1],
+      [1568, 0.6],
+      [2637, 0.35],
+      [3520, 0.2],
+    ] as const) {
+      const tone = context.createOscillator();
+      tone.type = 'sine';
+      tone.frequency.value = frequency;
+      const gain = this.envelope(context, { peak: 0.14 * s * level, attack: 0.01, decay: 1.1 });
+      tone.connect(gain);
+      tone.start(now);
+      tone.stop(now + 1.2);
+    }
+    return 1.2;
+  }
+
+  /** The tail sweeping: a quick band-passed swish of noise, rising. */
+  private swish(context: AudioContext, s: number): number {
+    const now = context.currentTime;
+    const source = this.noiseSource(context);
+    const filter = context.createBiquadFilter();
+    filter.type = 'bandpass';
+    filter.Q.value = 1.2;
+    filter.frequency.setValueAtTime(500, now);
+    filter.frequency.exponentialRampToValueAtTime(2600, now + 0.16);
+    const gain = this.envelope(context, { peak: 0.45 * s, attack: 0.03, decay: 0.2 });
+    source.connect(filter);
+    filter.connect(gain);
+    source.start(now);
+    source.stop(now + 0.26);
+    return 0.26;
   }
 
   private noiseSource(context: AudioContext): AudioBufferSourceNode {

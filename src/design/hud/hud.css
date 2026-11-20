@@ -1,0 +1,862 @@
+/*
+ * The hunt's interface, from the validated mockup (cut glass over the world): light and dark
+ * tokens, sizes in px where they are the game's touch targets (48 px at least), container
+ * queries on the game's box (`.game`, the size container of index.html) so the cluster fits
+ * 320 × 568 as well as 568 × 320. A container never answers its own queries: the sizes are set
+ * on the interface inside it. Loaded with the game, never in the first paint.
+ */
+:root {
+  --g-glass: light-dark(rgb(250 246 239 / 0.82), rgb(13 16 18 / 0.8));
+  --g-solid: light-dark(rgb(248 243 235 / 0.96), rgb(16 19 22 / 0.96));
+  --g-edge: light-dark(rgb(255 255 255 / 0.95), rgb(255 255 255 / 0.17));
+  --g-shade: light-dark(rgb(84 62 38 / 0.3), rgb(0 0 0 / 0.6));
+  --g-ink: light-dark(#1d1812, #f4eee5);
+  --g-ink2: light-dark(#574c40, #c2b9ac);
+  --g-amb: light-dark(#8f5200, #f4b647);
+  --g-hi: light-dark(#f6bb4c, #ffd27a);
+  --g-lo: light-dark(#d98a1e, #e3952a);
+  --g-on: light-dark(#2a1603, #231201);
+  --g-threat: light-dark(#006f7d, #62e6f2);
+  --g-scrim: light-dark(rgb(246 241 233 / 0.42), rgb(8 10 12 / 0.5));
+  --g-track: light-dark(rgb(84 62 38 / 0.2), rgb(255 255 255 / 0.16));
+  --g-line: light-dark(rgb(84 62 38 / 0.22), rgb(255 255 255 / 0.14));
+  --g-gem: light-dark(#2aa79a, #7fe3d6);
+  --cut: polygon(
+    10px 0,
+    calc(100% - 10px) 0,
+    100% 10px,
+    100% calc(100% - 10px),
+    calc(100% - 10px) 100%,
+    10px 100%,
+    0 calc(100% - 10px),
+    0 10px
+  );
+  --oct: polygon(29% 0, 71% 0, 100% 29%, 100% 71%, 71% 100%, 29% 100%, 0 71%, 0 29%);
+}
+
+/* The interface sits over the playing frame (2:1 at most); only its controls take touches. */
+.hud,
+.screen-end,
+.pause-sheet {
+  position: absolute;
+  inset-block: 0;
+  inset-inline: var(--side);
+  color: var(--g-ink);
+  font-family:
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    Roboto,
+    sans-serif;
+}
+.hud {
+  pointer-events: none;
+  padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) 12px
+    max(12px, env(safe-area-inset-left));
+  --ram: 72px;
+  --str: 60px;
+  --br: 68px;
+  --rx: 14px;
+  --by: max(18px, env(safe-area-inset-bottom));
+}
+.hud[hidden] {
+  display: none;
+}
+.hud button,
+.screen-end,
+.pause-sheet {
+  pointer-events: auto;
+}
+.hud svg,
+.screen-end svg,
+.pause-sheet svg {
+  width: 24px;
+  height: 24px;
+  flex: none;
+  fill: currentColor;
+}
+:where(.hud, .screen-end, .pause-sheet) :where(button) {
+  font: inherit;
+  color: inherit;
+  border: 0;
+  background: none;
+  padding: 0;
+  touch-action: manipulation;
+}
+.hud button:focus-visible,
+.screen-end button:focus-visible,
+.pause-sheet button:focus-visible {
+  outline: 3px solid var(--accent, #0a6680);
+  outline-offset: 3px;
+}
+
+/* Cut glass. */
+.g {
+  background: var(--g-glass);
+  -webkit-backdrop-filter: blur(7px) saturate(1.25);
+  backdrop-filter: blur(7px) saturate(1.25);
+  clip-path: var(--cut);
+  box-shadow:
+    inset 0 1px 0 var(--g-edge),
+    inset 0 -1px 0 var(--g-shade);
+  color: var(--g-ink);
+}
+.gs {
+  background: var(--g-solid);
+  clip-path: var(--cut);
+  box-shadow:
+    inset 0 1px 0 var(--g-edge),
+    inset 0 -1px 0 var(--g-shade);
+}
+
+/* The top row: the pause, the scanner, the crystals. */
+.hud-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.ico {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  flex: none;
+}
+.gems {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 48px;
+  margin: 0;
+  padding: 0 14px 0 10px;
+  font:
+    700 22px/1 system-ui,
+    sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+.gems svg {
+  color: var(--g-gem);
+}
+.scan {
+  position: relative;
+  flex: 1;
+  height: 48px;
+  overflow: hidden;
+}
+.scan .land {
+  position: absolute;
+  inset: 22px 0 0;
+  background: var(--g-track);
+  border-radius: 40% 40% 0 0 / 6px 6px 0 0;
+}
+/* The striped exits: as wide as the rock under the gates (set from the rules), 7 px at least. */
+.scan .exit {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  min-width: 7px;
+  background: repeating-linear-gradient(135deg, #1b1b1b 0 4px, #f2a516 4px 8px);
+}
+.scan .exit.l {
+  left: 0;
+}
+.scan .exit.r {
+  right: 0;
+}
+.scan .win {
+  position: absolute;
+  top: 6px;
+  bottom: 6px;
+  border: 1.5px solid var(--g-ink2);
+  border-radius: 3px;
+  opacity: 0.75;
+}
+.scan .it {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: grid;
+  place-items: center;
+}
+.scan .it[hidden] {
+  display: none;
+}
+.scan .it svg {
+  width: 16px;
+  height: 16px;
+}
+.scan .it.m {
+  top: 15px;
+  color: light-dark(#c8582a, #ff8a4f);
+}
+.scan .it.m.left svg {
+  transform: scaleX(-1);
+}
+.scan .it.m.stalled {
+  opacity: 0.45;
+}
+.scan .it.done {
+  opacity: 0.35;
+}
+.scan .it.d {
+  top: 9px;
+  color: var(--g-threat);
+}
+.scan .it.w {
+  top: 34px;
+  width: 12px;
+  height: 8px;
+  background: var(--g-amb);
+  clip-path: polygon(0 0, 100% 50%, 0 100%, 25% 50%);
+}
+.scan .it.w.left {
+  transform: translate(-50%, -50%) scaleX(-1);
+}
+.scan .it.run::after {
+  content: '';
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  width: 9px;
+  height: 2px;
+  background: currentColor;
+  box-shadow: 3px 0 0 currentColor;
+}
+.scan .it.run.left::after {
+  left: auto;
+  right: 100%;
+}
+.scan.alarm {
+  box-shadow:
+    inset 0 0 0 2px var(--g-threat),
+    inset 0 1px 0 var(--g-edge);
+}
+
+/* Spotted, the first hunt's hint and the hand that shows where to touch. */
+.alert,
+.hint {
+  position: absolute;
+  left: 50%;
+  top: 72px;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  white-space: nowrap;
+}
+.alert[hidden],
+.hint[hidden],
+.hand[hidden],
+.edge-glow[hidden] {
+  display: none;
+}
+.alert {
+  padding: 8px 14px 8px 10px;
+  font:
+    700 16px/1 system-ui,
+    sans-serif;
+  color: #0e1416;
+  background: linear-gradient(90deg, #61e6f2, #a6f3f9);
+  clip-path: var(--cut);
+}
+.alert svg {
+  width: 20px;
+  height: 20px;
+}
+.hint {
+  padding: 10px 16px;
+  font:
+    600 18px/1 system-ui,
+    sans-serif;
+}
+.hand {
+  position: absolute;
+  left: 72%;
+  top: 42%;
+  width: 54px;
+  height: 54px;
+  color: #fff;
+  filter: drop-shadow(0 2px 2px rgb(0 0 0 / 0.45));
+  animation: nudge 1.6s ease-in-out infinite;
+}
+.hand svg {
+  width: 54px;
+  height: 54px;
+  stroke: #1d1812;
+  stroke-width: 1.2;
+}
+@keyframes nudge {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  50% {
+    translate: 14px -18px;
+  }
+}
+@media (pointer: fine) {
+  .hud[data-keys] .hand {
+    display: none;
+  }
+}
+.edge-glow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  box-shadow: inset 0 0 40px -12px rgb(80 230 242 / 0.85);
+}
+
+/* The right thumb: ram, strike, breath. They arrive over the first hunts; the left stays free. */
+.act {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: var(--s);
+  height: var(--s);
+  clip-path: var(--cut);
+  background: var(--g-glass);
+  -webkit-backdrop-filter: blur(7px);
+  backdrop-filter: blur(7px);
+  box-shadow:
+    inset 0 0 0 2px var(--g-edge),
+    inset 0 -2px 0 var(--g-shade);
+  overflow: hidden;
+}
+.act[hidden],
+.breath-wrap[hidden] {
+  display: none;
+}
+.act svg {
+  position: relative;
+  width: 48%;
+  height: 48%;
+  color: var(--g-ink);
+}
+.act.ram {
+  --s: var(--ram);
+  right: var(--rx);
+  bottom: var(--by);
+}
+.act.strike {
+  --s: var(--str);
+  right: calc(var(--rx) + var(--ram) + 12px);
+  bottom: calc(var(--by) + 6px);
+}
+.act.strike[data-mode='tail'] .i-rock,
+.act.strike:not([data-mode='tail']) .i-tail {
+  display: none;
+}
+.act.cool::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: conic-gradient(rgb(10 12 14 / 0.62) 0 var(--cd, 40%), transparent 0);
+}
+.act.cool svg {
+  opacity: 0.55;
+}
+.breath-wrap {
+  position: absolute;
+  right: 16px;
+  bottom: max(18px, env(safe-area-inset-bottom));
+  width: 88px;
+  height: 88px;
+}
+.acts[data-ram] .breath-wrap {
+  right: calc(var(--rx) + (var(--ram) - var(--br)) / 2);
+  bottom: calc(var(--by) + var(--ram) + 14px);
+  width: var(--br);
+  height: var(--br);
+}
+.breath {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  clip-path: var(--oct);
+  background: var(--g-glass);
+  overflow: hidden;
+  -webkit-backdrop-filter: blur(7px);
+  backdrop-filter: blur(7px);
+  box-shadow: inset 0 0 0 2px var(--g-edge);
+}
+.hud button.breath {
+  position: absolute;
+}
+.breath::before {
+  content: '';
+  position: absolute;
+  inset: auto 0 0;
+  height: var(--fill, 0%);
+  background: linear-gradient(0deg, #e8741c, #ffc85a 70%, #fff0b8);
+}
+.breath svg {
+  position: relative;
+  width: 44%;
+  height: 44%;
+  color: var(--g-ink);
+}
+.breath-wrap.full .breath svg {
+  color: #3a1a02;
+}
+.breath-wrap .ring {
+  position: absolute;
+  inset: -6px;
+  clip-path: var(--oct);
+  background: conic-gradient(from 0deg, #ffd27a, #ff9b2f, #ffd27a);
+  opacity: 0;
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box exclude,
+    linear-gradient(#000 0 0);
+  mask:
+    linear-gradient(#000 0 0) content-box exclude,
+    linear-gradient(#000 0 0);
+  padding: 4px;
+  pointer-events: none;
+}
+.breath-wrap.full .ring {
+  opacity: 1;
+  animation: beat 1.1s ease-out infinite;
+}
+@keyframes beat {
+  0% {
+    transform: scale(0.96);
+    opacity: 1;
+  }
+  80%,
+  100% {
+    transform: scale(1.22);
+    opacity: 0;
+  }
+}
+/* An action that just unlocked arrives with a pop. */
+.arrive {
+  animation: arrive 0.42s cubic-bezier(0.2, 1.4, 0.4, 1);
+}
+@keyframes arrive {
+  from {
+    scale: 0.5;
+    opacity: 0;
+  }
+}
+
+/*
+ * Key hints, on a computer only (a fine pointer and no touch screen, `data-keys` from the
+ * platform): the mouse's buttons under ram and strike, Space by the breath.
+ */
+.acts kbd {
+  position: absolute;
+  display: none;
+  font:
+    600 14px/1 system-ui,
+    sans-serif;
+  padding: 4px 7px;
+  border-radius: 5px;
+  background: var(--g-solid);
+  color: var(--g-ink2);
+  box-shadow: inset 0 -2px 0 var(--g-line);
+  white-space: nowrap;
+}
+.acts kbd svg {
+  width: 20px;
+  height: 20px;
+}
+@media (pointer: fine) {
+  .hud[data-keys] .acts kbd {
+    display: grid;
+    place-items: center;
+  }
+  .hud[data-keys] .acts:not([data-ram]) .kh,
+  .hud[data-keys] .acts:not([data-strike]) .k-str {
+    display: none;
+  }
+}
+.kh {
+  padding: 3px 5px;
+}
+.k-ram {
+  right: calc(var(--rx) + var(--ram) / 2);
+  bottom: calc(var(--by) - 28px);
+  transform: translateX(50%);
+}
+.k-str {
+  right: calc(var(--rx) + var(--ram) + 12px + var(--str) / 2);
+  bottom: calc(var(--by) - 22px);
+  transform: translateX(50%);
+}
+.breath-wrap kbd {
+  right: 100%;
+  top: 50%;
+  transform: translate(-8px, -50%);
+}
+
+/* The smallest phone, 320 px wide: tighter, still 44 px menus and 48 px actions or more. */
+@container game (width < 21.25rem) {
+  .hud-top {
+    gap: 6px;
+  }
+  .ico {
+    width: 44px;
+    height: 44px;
+  }
+  .gems {
+    height: 44px;
+    padding: 0 10px 0 8px;
+    font-size: 20px;
+  }
+  .scan {
+    height: 44px;
+  }
+  .hud {
+    --ram: 66px;
+    --str: 56px;
+    --br: 62px;
+    --rx: 12px;
+  }
+  .breath-wrap {
+    width: 80px;
+    height: 80px;
+    right: 12px;
+  }
+  .hint {
+    font-size: 16px;
+    padding: 9px 12px;
+  }
+}
+/* A phone on its side. */
+@container game (orientation: landscape) and (height < 26.25rem) {
+  .hud {
+    --ram: 62px;
+    --str: 54px;
+    --br: 58px;
+    --rx: 16px;
+  }
+  .alert,
+  .hint {
+    top: 64px;
+  }
+}
+/* A computer. */
+@container game (width >= 62.5rem) {
+  .hud-top {
+    gap: 12px;
+  }
+  .scan {
+    max-width: 620px;
+    margin-inline: auto;
+  }
+  .hud {
+    --ram: 72px;
+    --str: 60px;
+    --br: 72px;
+    --rx: 34px;
+    --by: 52px;
+  }
+  .breath-wrap {
+    width: 96px;
+    height: 96px;
+    right: 32px;
+    bottom: 44px;
+  }
+}
+
+/* The end of a hunt and the pause: over the world, which goes on behind. */
+.screen-end[hidden],
+.pause-sheet[hidden] {
+  display: none;
+}
+.scrim {
+  position: absolute;
+  inset: 0;
+  background: var(--g-scrim);
+}
+.screen-end {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 22px 16px max(18px, env(safe-area-inset-bottom));
+}
+.screen-end > :not(.scrim) {
+  position: relative;
+}
+.kicker {
+  margin: 0;
+  font:
+    600 15px/1.2 system-ui,
+    sans-serif;
+  color: var(--g-ink2);
+}
+.title {
+  margin: 0;
+  font:
+    700 32px/1.05 system-ui,
+    sans-serif;
+  color: var(--g-ink);
+  text-wrap: balance;
+}
+.plaque {
+  display: grid;
+  gap: 14px;
+  padding: 18px 16px;
+}
+.loot {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  font:
+    700 46px/1 system-ui,
+    sans-serif;
+}
+.screen-end .loot svg {
+  width: 38px;
+  height: 38px;
+  color: var(--g-gem);
+}
+.loot small {
+  margin-left: auto;
+  font:
+    600 15px/1.2 system-ui,
+    sans-serif;
+  color: var(--g-ink2);
+}
+.src {
+  display: flex;
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font:
+    600 17px/1 system-ui,
+    sans-serif;
+  color: var(--g-ink2);
+}
+.src li {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.stars {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  text-align: center;
+}
+.stars li {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  font:
+    600 15px/1.15 system-ui,
+    sans-serif;
+  color: var(--g-ink2);
+}
+.screen-end .stars svg {
+  width: 46px;
+  height: 46px;
+  color: var(--g-track);
+}
+.stars li.on {
+  color: var(--g-ink);
+}
+.screen-end .stars li.on svg {
+  color: #f2a81e;
+  filter: drop-shadow(0 0 6px rgb(255 170 40 / 0.55));
+}
+.why-fail,
+.tip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  font:
+    600 18px/1.2 system-ui,
+    sans-serif;
+}
+.why-fail {
+  color: var(--g-threat);
+}
+.screen-end .why-fail svg {
+  width: 28px;
+  height: 28px;
+}
+.tip {
+  font-size: 16px;
+  color: var(--g-ink2);
+}
+.acts-end {
+  display: grid;
+  gap: 10px;
+  margin-top: auto;
+}
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 0 18px;
+  clip-path: var(--cut);
+  font:
+    600 18px/1 system-ui,
+    sans-serif;
+  background: var(--g-glass);
+  color: var(--g-ink);
+  -webkit-backdrop-filter: blur(7px);
+  backdrop-filter: blur(7px);
+  box-shadow:
+    inset 0 1px 0 var(--g-edge),
+    inset 0 -1px 0 var(--g-shade);
+}
+.screen-end .btn,
+.pause-sheet .btn {
+  padding: 0 18px;
+  background: var(--g-glass);
+}
+.screen-end .btn.primary,
+.pause-sheet .btn.primary {
+  background: linear-gradient(180deg, var(--g-hi), var(--g-lo));
+  color: var(--g-on);
+}
+.btn.big {
+  min-height: 60px;
+  font-size: 22px;
+  width: 100%;
+}
+@container game (orientation: landscape) and (height < 32.5rem) {
+  .screen-end {
+    display: grid;
+    grid-template-columns: 1.15fr 1fr;
+    grid-template-rows: auto 1fr;
+    gap: 10px 18px;
+    padding: 16px 22px;
+  }
+  .screen-end > .head {
+    grid-column: 1 / -1;
+  }
+  .title {
+    font-size: 26px;
+  }
+  .plaque {
+    gap: 10px;
+    padding: 12px 14px;
+  }
+  .loot {
+    font-size: 36px;
+  }
+  .acts-end {
+    margin-top: 0;
+    align-content: end;
+  }
+  .btn.big {
+    min-height: 54px;
+    font-size: 20px;
+  }
+}
+@container game (width >= 62.5rem) and (height >= 37.5rem) {
+  .screen-end {
+    display: grid;
+    grid-template-columns: minmax(0, 520px) minmax(0, 380px);
+    justify-content: center;
+    align-content: center;
+    gap: 18px 28px;
+    padding: 40px;
+  }
+  .screen-end > .head {
+    grid-column: 1 / -1;
+  }
+  .title {
+    font-size: 44px;
+  }
+  .acts-end {
+    margin-top: 0;
+    align-content: end;
+  }
+}
+
+/* The pause. */
+.pause-sheet {
+  display: grid;
+  place-items: center;
+  padding: 16px;
+}
+.pause-sheet .sheet {
+  position: relative;
+  display: grid;
+  gap: 12px;
+  width: min(100%, 360px);
+  max-height: calc(100% - 32px);
+  overflow: auto;
+  padding: 18px 16px;
+  color: var(--g-ink);
+}
+.sheet-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.sheet-head .title {
+  font-size: 26px;
+}
+.close {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+}
+.tog {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 0 14px;
+  font:
+    600 17px/1 system-ui,
+    sans-serif;
+  border-radius: 999px;
+  box-shadow: inset 0 0 0 1.5px var(--g-line);
+}
+.pause-sheet .tog[aria-pressed='false'] {
+  opacity: 0.6;
+  text-decoration: line-through;
+}
+.tester {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 6px 10px;
+  align-items: center;
+  padding-top: 10px;
+  border-top: 1px solid var(--g-line);
+}
+.tester[hidden] {
+  display: none;
+}
+.tester-label {
+  grid-column: 1 / -1;
+  margin: 0;
+  font:
+    600 15px/1.2 system-ui,
+    sans-serif;
+  color: var(--g-ink2);
+}
+.tester .code {
+  font:
+    700 18px/1.2 ui-monospace,
+    'Cascadia Mono',
+    Consolas,
+    monospace;
+  letter-spacing: 0.04em;
+  user-select: all;
+  -webkit-user-select: all;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .breath-wrap.full .ring,
+  .hand,
+  .arrive {
+    animation: none;
+  }
+}

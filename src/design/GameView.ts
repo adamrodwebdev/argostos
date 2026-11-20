@@ -2,11 +2,20 @@ import type { Hunt } from '../logic/hunt/Hunt';
 import type { HuntEvents } from '../logic/hunt/HuntEvents';
 import type { Box } from '../logic/truck/Truck';
 import type { RandomSource } from '../rules/random';
+import { TOWER } from '../rules/terrainTraps';
+import { ActionPainter } from './actions/ActionPainter';
 import { Camera, type Followed } from './Camera';
+import { CombatEffects } from './fx/CombatEffects';
 import { Effects } from './fx/Effects';
 import { FireSources } from './fx/FireSources';
 import { HeroPainter } from './hero/HeroPainter';
+import { CombatOverlay } from './hud/CombatOverlay';
+import type { ScreenBox } from './hud/labelPlacement';
+import { DronePainter } from './machines/DronePainter';
+import { TowerPainter } from './machines/TowerPainter';
+import { ArenaMarksPainter } from './painters/ArenaMarksPainter';
 import { BackdropPainter } from './painters/BackdropPainter';
+import { OutsideSandPainter } from './painters/OutsideSandPainter';
 import { SandPainter } from './painters/SandPainter';
 import { SprayPainter } from './painters/SprayPainter';
 import { SIDE_SHADE } from './palette';
@@ -27,6 +36,10 @@ export interface GameViewOptions {
   readonly sound: SoundPort;
   /** The hunt's time: held at a bite, slowed for a hunt's last prey. */
   readonly time: TimeControl;
+  /** The interface's boxes no damage number covers (CSS px, from the canvas's corner). */
+  readonly keepOut: () => readonly ScreenBox[];
+  /** The top of the area damage numbers may use (CSS px): under the top row. */
+  readonly ceiling: () => number;
 }
 
 /**
@@ -42,10 +55,12 @@ export interface ViewFrame {
 
 /** Prey this close to his jaws (m) makes them open wide. */
 const JAWS_SENSE_M = 7;
+/** A tower's fall is framed until this long after its crash (s): the hero again after. */
+const TOWER_FRAMED_S = 1.5;
 
 /**
- * Draws a hunt: the camera frames the hero, then the sky and far dunes, the sand, the trucks
- * and their wrecks, the hero, the thrown sand and the effects. Actors stay inside the playing
+ * Draws a hunt: the camera frames the hero, then the sky and far dunes, the sand, the drilling
+ * towers, the trucks and their wrecks, the hero, the thrown sand and the effects. Actors stay inside the playing
  * frame (2:1 at most); beyond it the art goes on, dimmed. It listens to the hunt's events for
  * its effects and sounds, and decides nothing in the hunt.
  */
@@ -60,9 +75,16 @@ export class GameView {
   private readonly effects: Effects;
   private readonly fires: FireSources;
   private readonly takedowns: TakedownEffects;
+  private readonly combat: CombatEffects;
+  private readonly outside: OutsideSandPainter;
+  private readonly marks: ArenaMarksPainter;
+  private readonly drones: DronePainter;
+  private readonly towers: TowerPainter;
+  private readonly actions: ActionPainter;
+  private readonly overlay: CombatOverlay;
   private readonly box: Box = { left: 0, right: 0, bottom: 0, top: 0 };
   private readonly ground: (x: number) => number;
-  private readonly focus = { x: 0, z: 0, velocityX: 0, velocityZ: 0 };
+  private readonly focus = { x: 0, z: 0, velocityX: 0, velocityZ: 0, takedown: true };
 
   constructor(private readonly options: GameViewOptions) {
     const { hunt, random, reducedMotion, events } = options;
@@ -92,6 +114,44 @@ export class GameView {
       sound: options.sound,
       ground: this.ground,
     });
+    this.combat = new CombatEffects({
+      events,
+      effects: this.effects,
+      fires: this.fires,
+      camera: this.camera,
+      time: options.time,
+      sound: options.sound,
+      random,
+      trucks: () => hunt.trucks,
+    });
+    this.outside = new OutsideSandPainter(hunt.profile, hunt.measures, random);
+    this.marks = new ArenaMarksPainter({ ground: this.ground, trucks: () => hunt.trucks });
+    this.drones = new DronePainter({
+      drones: () => hunt.droneList,
+      hero: hunt.hero,
+      alarmed: () => hunt.alarmed,
+      effects: this.effects,
+      sound: options.sound,
+    });
+    this.towers = new TowerPainter({
+      towers: () => hunt.towerList,
+      events,
+      effects: this.effects,
+      sound: options.sound,
+      ground: this.ground,
+    });
+    this.actions = new ActionPainter({ dome: hunt.dome, rocks: hunt.rocks, ground: this.ground });
+    this.overlay = new CombatOverlay({
+      source: {
+        trucks: () => hunt.trucks,
+        drones: () => hunt.droneList,
+        towers: () => hunt.towerList,
+        hero: hunt.hero,
+      },
+      events,
+      keepOut: options.keepOut,
+      ceiling: options.ceiling,
+    });
     events.on('truckCaught', () => {
       this.hero.jaws.snap();
     });
@@ -119,37 +179,56 @@ export class GameView {
     this.sand.refresh();
     this.effects.step(huntDt, this.ground);
     this.fires.step(huntDt, hunt);
+    this.combat.frame(huntDt);
     this.trucks.frame(huntDt);
     this.hero.frame(huntDt, this.eagerness());
+    this.marks.frame(huntDt);
+    this.drones.frame(huntDt);
+    this.actions.frame(huntDt);
+    this.overlay.frame(realDt);
     context.setTransform(1, 0, 0, 1, 0, 0);
     context.globalAlpha = 1;
     this.backdrop.draw(context, view);
     this.sand.draw(context, view);
+    this.outside.draw(context, view);
     context.save();
     context.beginPath();
     context.rect(view.frameLeftPx, 0, view.frameRightPx - view.frameLeftPx, view.heightPx);
     context.clip();
+    this.drones.drawRings(context, view);
+    this.marks.drawVibrations(context, view);
+    this.marks.drawGates(context, view);
+    this.towers.draw(context, view);
     this.trucks.draw(context, view, blend);
+    this.actions.draw(context, view);
     this.hero.draw(context, view, blend);
+    this.drones.draw(context, view);
     this.spray.draw(context, view);
     this.effects.draw(context, view);
     context.restore();
     this.shadeSides(context);
+    this.overlay.draw(context, view, layout.cssPpm);
   }
 
   /**
-   * What the camera frames: the hero, or, while a takedown plays, the hero and the wreck together
-   * (the moment stays on screen while he dives away with it).
+   * What the camera frames: the hero, or, while a takedown plays, the wreck mid-screen with the
+   * sky above it for what it throws, the hero beside it (the moment stays on screen while he
+   * dives away with it); a drilling tower's fall the same way, until a moment after its crash.
    */
   private framed(): Followed {
-    const { hero, trucks } = this.options.hunt;
-    const caught = trucks.find((truck) => truck.isCaught);
-    if (!caught) return hero;
+    const { hero, trucks, towerList } = this.options.hunt;
     const focus = this.focus;
-    focus.x = (hero.x + caught.wreck.x) / 2;
-    focus.z = (hero.z + caught.wreck.z) / 2;
-    focus.velocityX = 0;
-    focus.velocityZ = 0;
+    const caught = trucks.find((truck) => truck.isCaught);
+    if (caught) {
+      focus.x = (hero.x + caught.wreck.x) / 2;
+      focus.z = caught.wreck.z;
+      return focus;
+    }
+    const falling = towerList.find((tower) => tower.fell && tower.downSeconds < TOWER_FRAMED_S);
+    if (!falling) return hero;
+    const middle = falling.x + Math.sin(falling.lean) * TOWER.heightM * 0.45;
+    focus.x = (hero.x + middle) / 2;
+    focus.z = falling.baseZ;
     return focus;
   }
 

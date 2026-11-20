@@ -1,4 +1,5 @@
 import { BURST, DIGGING, SPRAY } from '../../rules/digging';
+import { layBackShare, UNDERMINING } from '../../rules/terrainTraps';
 import { Element, isLoose } from '../../rules/elements';
 import type { RandomSource } from '../../rules/random';
 import type { GridMeasures } from '../../rules/world';
@@ -42,6 +43,11 @@ export class HeroDigging {
   private carriedCount = 0;
   /** The head's velocity this step (the sand it throws flies along with it). */
   private velocity: Velocity = { x: 0, z: 0 };
+  /** Refills owed, accumulated cell by cell (an even spread, no chance in it). */
+  private owed = 0;
+  /** The sand's top row of each column, read once a step (`topAt`: the step it was read). */
+  private readonly topRow: Int32Array;
+  private readonly topAt: Uint32Array;
   private readonly thrower: SandThrower;
 
   constructor(private readonly world: DiggingWorld) {
@@ -50,6 +56,8 @@ export class HeroDigging {
     this.filledAt = new Uint32Array(columns * rows);
     this.filled = new Int32Array(8192);
     this.wasFilled = new Int32Array(8192);
+    this.topRow = new Int32Array(columns);
+    this.topAt = new Uint32Array(columns);
   }
 
   /** Grains carried round the body now (they are still the desert's). */
@@ -62,7 +70,11 @@ export class HeroDigging {
     return this.filledCount;
   }
 
-  /** The body moved: fills the cells it now covers, frees those it left. */
+  /**
+   * The body moved: fills the cells it now covers and frees those it left, refilling them from
+   * what it carries: all of them deep down, only a share just under the sand's top, so the
+   * ground over a shallow pass caves in (the rest stays carried, thrown out at his next burst).
+   */
   dig(body: HeroBody, velocity: Velocity): void {
     this.steps++;
     this.velocity = velocity;
@@ -123,15 +135,53 @@ export class HeroDigging {
     });
   }
 
-  /** The body left these cells: they open, and what it carries flows back into them. */
+  /**
+   * The grains he keeps thrown up out of the hole as he bursts out (a mound where they land),
+   * at most `UNDERMINING.moundGrains` at full strength.
+   */
+  mound(x: number, z: number, strength: number): void {
+    const { spray, random } = this.world;
+    const count = Math.min(this.carriedCount, Math.round(UNDERMINING.moundGrains * strength));
+    for (let n = 0; n < count && spray.hasRoom; n++) {
+      const side = random.next() - 0.5;
+      spray.launch({
+        x: x + side * 1.2,
+        z,
+        vx: side * 2 * UNDERMINING.moundSpread + this.velocity.x * 0.2,
+        vz: UNDERMINING.moundUp * (0.55 + 0.45 * random.next()),
+        shade: this.takeCarried(),
+      });
+    }
+  }
+
+  /**
+   * The body left these cells: they open, and what it carries flows back into them, into a
+   * share of them only where they lie just under the sand's top (the rules' undermining depth).
+   */
   private leave(): void {
     const { grid } = this.world;
     for (let n = 0; n < this.wasFilledCount; n++) {
       const i = this.wasFilled[n]!;
       if (this.filledAt[i] === this.steps) continue;
       grid.unblock(i);
-      if (this.carriedCount > 0 && grid.isFree(i)) grid.place(i, Element.Sand, this.takeCarried());
+      if (this.carriedCount === 0 || !grid.isFree(i)) continue;
+      this.owed += layBackShare(this.depthOf(i));
+      if (this.owed < 1) continue;
+      this.owed -= 1;
+      grid.place(i, Element.Sand, this.takeCarried());
     }
+  }
+
+  /** How deep under the sand's top cell i lies (m; negative above it, in the air). */
+  private depthOf(i: number): number {
+    const { grid, measures } = this.world;
+    const x = i % grid.width;
+    const y = (i - x) / grid.width;
+    if (this.topAt[x] !== this.steps) {
+      this.topAt[x] = this.steps;
+      this.topRow[x] = grid.surfaceRow(x);
+    }
+    return (y - this.topRow[x]!) * measures.cellM;
   }
 
   /**

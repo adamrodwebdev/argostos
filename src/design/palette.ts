@@ -56,6 +56,8 @@ export const GRAIN_CONTRAST = 0.035;
 /** How much the light fades from the surface to the bottom of the arena. */
 export const DEPTH_SHADOW = 0.22;
 export const ROCK = rgb('#4b3a2c');
+/** The Company's concrete under its exit gates (rock nothing digs). */
+export const FOUNDATION = rgb('#8f8a80');
 /** The sand's sunlit edge. */
 export const SAND_RIM = 'rgba(255,242,218,0.85)';
 /** Sand beyond the arena's exits, drawn flat (no simulation there). */

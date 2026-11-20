@@ -1,8 +1,10 @@
 import { BURST } from '../../rules/digging';
 import { HERO_BODY, NOISE, noiseFor } from '../../rules/swimming';
+import { EXIT_GROUND } from '../../rules/terrainTraps';
 import type { SteeringIntent } from '../input/Steering';
 import type { GridProbe } from '../sand/GridProbe';
 import type { SandSurface } from '../sand/GridSurface';
+import { HeadTrace } from './HeadTrace';
 import { HeroBody } from './HeroBody';
 import { HeroDigging, type DiggingWorld } from './HeroDigging';
 import { HeroMotion, Transition, type Medium, type TransitionId } from './HeroMotion';
@@ -22,6 +24,9 @@ export interface HeroStart {
 
 /** Points drawn along the body: one per segment of the stand-in (the mockup has 26). */
 const POSE_POINTS = 30;
+/** The head's recent path kept for the runes to come: a place every half metre, 256 of them. */
+const TRACE_PLACES = 256;
+const TRACE_SPACING_M = 0.5;
 
 /**
  * The hero (code name only): a segmented worm that swims through the sand toward the player's
@@ -30,6 +35,9 @@ const POSE_POINTS = 30;
  */
 export class Hero {
   readonly body: HeroBody;
+  /** His head's recent path (a rune's recogniser will read it later). */
+  readonly trace = new HeadTrace(TRACE_PLACES, TRACE_SPACING_M);
+  private clock = 0;
   private readonly motion: HeroMotion;
   private readonly digging: HeroDigging;
   private loudness = 0;
@@ -52,9 +60,10 @@ export class Hero {
       ...start,
       radiusM,
       cellM,
+      // The rock under the exit gates is a wall to him, like the bedrock under the sand.
       bounds: {
-        minX: radiusM + 0.5,
-        maxX: columns * cellM - radiusM - 0.5,
+        minX: EXIT_GROUND.widthM + radiusM + 0.5,
+        maxX: columns * cellM - EXIT_GROUND.widthM - radiusM - 0.5,
         floorZ: bottomZ + bedrockRows * cellM + radiusM + 0.3,
       },
       probe: world.probe,
@@ -96,6 +105,21 @@ export class Hero {
     return this.loudness;
   }
 
+  /** A burst of speed (the ram) is driving him on. */
+  get boosting(): boolean {
+    return this.motion.boosting;
+  }
+
+  /** A burst of speed along his way (the ram). */
+  boost(speed: number, seconds: number): void {
+    this.motion.boost(speed, seconds);
+  }
+
+  /** He hit something hard: he keeps only `share` of his speed. */
+  recoil(share: number): void {
+    this.motion.brake(share);
+  }
+
   /** Grains carried round his body (still the desert's sand). */
   get carriedGrains(): number {
     return this.digging.carriedGrains;
@@ -110,9 +134,13 @@ export class Hero {
     this.digging.dig(this.body, this.velocity);
     if (transition === Transition.Breach) {
       this.digging.burst(this.motion.x, this.motion.z, BURST.breach);
+      // A fast burst throws up what he carried: a mound round the hole.
+      this.digging.mound(this.motion.x, this.motion.z, Math.min(1, this.motion.speed / 14));
     } else if (transition === Transition.Dive) {
       this.digging.burst(this.motion.x, this.motion.z, BURST.dive);
     }
+    this.clock += this.stepSeconds;
+    this.trace.record(this.motion.x, this.motion.z, this.clock);
     // Noise rises at once and fades smoothly; a burst out of the sand is loud.
     const heard = transition === Transition.Breach ? NOISE.breach : noiseFor(this.motion.speed);
     const fade = 1 - Math.exp(-NOISE.follow * this.stepSeconds);

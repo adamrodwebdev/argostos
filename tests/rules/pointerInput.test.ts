@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { readPointer, type RawPointer } from '../../src/rules/pointerInput';
+import { readMouseButton, readPointer, type RawPointer } from '../../src/rules/pointerInput';
 
 const AREA = { left: 10, top: 20, width: 320, height: 568 } as const;
 const FINGER: RawPointer = {
@@ -72,4 +72,18 @@ describe('readPointer: a pointer is read at the door', () => {
     expect(readPointer(FINGER, { ...AREA, width: 0 })).toBeNull();
     expect(readPointer(FINGER, { ...AREA, height: Number.NaN })).toBeNull();
   });
+});
+
+describe('readMouseButton: the left button rams, the right one strikes', () => {
+  test('0 is the left button, 2 the right one', () => {
+    expect(readMouseButton(0)).toBe('primary');
+    expect(readMouseButton(2)).toBe('secondary');
+  });
+
+  test.each([1, 3, 4, -1, 0.5, Number.NaN, '0', null, undefined, [0], { valueOf: () => 0 }])(
+    'a button of %j does nothing',
+    (raw) => {
+      expect(readMouseButton(raw)).toBeNull();
+    },
+  );
 });

@@ -14,10 +14,12 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+# Ubuntu 24.04, named: `ubuntu-latest` moved to 26.04, where Playwright 1.64 cannot install
+# WebKit's system libraries.
 jobs:
   quality:
     name: Lint, types, unit tests, build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
@@ -36,10 +38,16 @@ jobs:
           ls -l dist/assets
           gzip -9 -c dist/assets/*.js | wc -c
 
-  smoke:
-    name: Smoke test (Chrome)
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
+  e2e:
+    name: End-to-end (${{ matrix.engine }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chrome, firefox, webkit]
+    env:
+      E2E_ENGINE: ${{ matrix.engine }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -47,14 +55,16 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
-      # The production build the smoke test plays (the quality job checks its types).
+      # The production build the tests play (the quality job checks its types).
       - run: npx vite build
-      # The runner's installed Chrome: no browser download.
+      # Chrome is the runner's own; Playwright's Firefox and WebKit are installed on the runner.
+      - if: matrix.engine != 'chrome'
+        run: npx playwright install --with-deps ${{ matrix.engine }}
       - run: npm run test:e2e
-        timeout-minutes: 8
+        timeout-minutes: 18
       - uses: actions/upload-artifact@v4
         if: failure() || cancelled()
         with:
-          name: smoke-results
+          name: e2e-results-${{ matrix.engine }}
           path: test-results/
           if-no-files-found: ignore

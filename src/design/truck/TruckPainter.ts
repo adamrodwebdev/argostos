@@ -5,6 +5,7 @@ import type { RandomSource } from '../../rules/random';
 import type { TruckGeometry, WheelStrip } from '../../rules/truckManifest';
 import { STEP_SECONDS } from '../../rules/world';
 import type { Effects } from '../fx/Effects';
+import { clipAboveSand } from '../painters/sandClip';
 import { CHARRED, SHADOW_COLOUR } from '../palette';
 import type { View } from '../View';
 import type { LoadedSet, TruckArt } from './TruckArt';
@@ -23,6 +24,8 @@ export interface TruckPainterOptions {
 /** Dust raised per metre driven, and its life (s). */
 const DUST_PER_METRE = 2.2;
 const DUST_LIFE = 1.2;
+/** A truck stuck in loose sand spins its wheels: this much dust a second, thrown back. */
+const STUCK_DUST_PER_S = 34;
 /** How far the folded halves turn (radians at a full fold), and how hard the wreck shudders. */
 const FOLD_ANGLE = 0.5;
 const SHUDDER_M = 0.05;
@@ -34,8 +37,15 @@ const PANELS: readonly (readonly [number, number, number, number])[] = [
   [0.66, 0.3, 0.14, 0.25],
   [0.15, 0.22, 0.17, 0.2],
 ];
+/** The armoured truck's plates along its bed: where each starts and how wide (m from the rear hub). */
+const PLATES: readonly (readonly [number, number])[] = [
+  [-2.9, 2.3],
+  [-0.45, 2.3],
+  [2.0, 2.3],
+];
+/** Rivets along a plate (shares of its width). */
+const RIVETS: readonly number[] = [0.12, 0.5, 0.88];
 /** The sand's rim is sampled this often (m) for the clip that sinks wrecks into it. */
-const RIM_STEP_M = 0.25;
 
 /**
  * Draws the Company's trucks from their Blender sprites (ported from the sprite test bench):
@@ -82,17 +92,22 @@ export class TruckPainter {
         continue;
       }
       const { rig } = truck;
-      let owed = (this.owed.get(truck.id) ?? 0) + rig.speed * DUST_PER_METRE * dt;
+      const stuck = rig.stuck;
+      const rate = stuck ? STUCK_DUST_PER_S : rig.speed * DUST_PER_METRE;
+      let owed = (this.owed.get(truck.id) ?? 0) + rate * dt;
       while (owed >= 1) {
         owed -= 1;
-        const fromRear = random.next() < 0.7;
+        const fromRear = stuck || random.next() < 0.7;
         const r = this.geometry.wheelRadiusM;
         const x =
           (fromRear ? rig.rearX : rig.frontX) - rig.direction * (0.4 + 0.5 * random.next()) * r;
         emit.x = x;
         emit.z = ground(x) + 0.1;
-        emit.vx = -0.25 * rig.speed * rig.direction + (random.next() - 0.5);
-        emit.vz = 0.4 + 0.9 * random.next();
+        // Stuck, the spinning wheels throw it back and up, hard.
+        emit.vx = stuck
+          ? -rig.direction * (2.5 + 2.5 * random.next())
+          : -0.25 * rig.speed * rig.direction + (random.next() - 0.5);
+        emit.vz = stuck ? 1.6 + 2 * random.next() : 0.4 + 0.9 * random.next();
         emit.life = DUST_LIFE + random.next();
         effects.one('dust', emit);
       }
@@ -111,7 +126,7 @@ export class TruckPainter {
     if (!sinking && this.options.wreckage.count === 0) return;
     // Wrecks and debris go under the sand: everything below its rim is cut away.
     context.save();
-    this.clipAboveSand(context, view);
+    clipAboveSand(context, view, this.options.ground);
     for (const truck of this.options.trucks()) {
       if (truck.isCaught) this.drawWreck(context, view, { truck, set, blend });
     }
@@ -135,6 +150,7 @@ export class TruckPainter {
     context.scale(rig.direction, 1);
     context.rotate(-rig.pitch);
     this.drawBody(context, view, set);
+    if (truck.row.plated) this.drawPlates(context, view.scale);
     context.restore();
     for (const [x, z] of [
       [rearX, rig.rearWheelZ],
@@ -254,6 +270,24 @@ export class TruckPainter {
     );
   }
 
+  /**
+   * The armoured truck's steel plates, bolted over the bed (drawn in code over the sprite until
+   * the 3D team renders the variant): from the rear hub, in metres.
+   */
+  private drawPlates(context: CanvasRenderingContext2D, s: number): void {
+    for (const [left, width] of PLATES) {
+      context.fillStyle = 'rgb(74 79 86 / 0.94)';
+      context.fillRect(left * s, -4.3 * s, width * s, 2.2 * s);
+      context.fillStyle = 'rgb(150 156 164 / 0.9)';
+      context.fillRect(left * s, -4.3 * s, width * s, 0.14 * s);
+      context.fillStyle = 'rgb(28 30 34 / 0.9)';
+      for (const along of RIVETS) {
+        context.fillRect((left + along * width) * s - 0.06 * s, -4.0 * s, 0.12 * s, 0.12 * s);
+        context.fillRect((left + along * width) * s - 0.06 * s, -2.4 * s, 0.12 * s, 0.12 * s);
+      }
+    }
+  }
+
   /** One frame of the wheel's strip, plus the turn left between two frames (clockwise rolling right). */
   private drawWheel(context: CanvasRenderingContext2D, view: View, wheel: WheelTurn): void {
     const { periodDeg, stepDeg, frames } = this.wheel;
@@ -277,20 +311,6 @@ export class TruckPainter {
   }
 
   /** The region above the sand's rim, across the view: a wreck below it is under the sand. */
-  private clipAboveSand(context: CanvasRenderingContext2D, view: View): void {
-    const { ground } = this.options;
-    const left = view.worldX(0);
-    const right = view.worldX(view.widthPx);
-    context.beginPath();
-    context.moveTo(0, -1);
-    for (let x = left; x <= right + RIM_STEP_M; x += RIM_STEP_M) {
-      context.lineTo(view.screenX(x), view.screenY(ground(x)));
-    }
-    context.lineTo(view.widthPx, -1);
-    context.closePath();
-    context.clip();
-  }
-
   /** The body's sprite burnt dark (made once per scale): crossfaded in as the wreck burns. */
   private charredOf(set: LoadedSet): HTMLCanvasElement | null {
     const ppm = set.set.pixelsPerMetre;

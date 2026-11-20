@@ -7,14 +7,81 @@ describe('readUrlOptions: the URL is an allow-list, read strictly', () => {
   });
 
   test('every option read when it is right', () => {
-    expect(readUrlOptions('?seed=2026&detail=fine&debug=1&autopilot=1&mute=1')).toEqual({
+    expect(
+      readUrlOptions(
+        '?seed=2026&detail=fine&debug=1&autopilot=1&bot=sapper&mute=1&hunt=3&tester=1',
+      ),
+    ).toEqual({
       seed: 2026,
       detail: 'fine',
       debug: true,
       autopilot: true,
+      bot: 'sapper',
       mute: true,
+      hunt: 3,
+      tester: true,
     });
   });
+
+  test.each([
+    ['zero', '?hunt=0'],
+    ['past the last number read', '?hunt=100'],
+    ['a decimal', '?hunt=2.5'],
+    ['an exponent', '?hunt=1e1'],
+    ['letters after the digits', '?hunt=2b'],
+    ['negative', '?hunt=-2'],
+    ['twice', '?hunt=2&hunt=3'],
+    ['a name', '?hunt=__proto__'],
+  ])('a hunt that is %s plays the first hunt', (_case, query) => {
+    expect(readUrlOptions(query).hunt).toBe(1);
+  });
+
+  test.each(['?bot=Sapper', '?bot=digger', '?bot=', '?bot=sapper&bot=hunter', '?bot=__proto__'])(
+    'a bot style %s outside the list keeps the hunter',
+    (query) => {
+      expect(readUrlOptions(query).bot).toBe('hunter');
+    },
+  );
+
+  test.each([
+    ['#tester', { tester: true }],
+    ['#autopilot', { autopilot: true, bot: 'hunter' }],
+    ['#sapper', { autopilot: true, bot: 'sapper' }],
+  ] as const)('the hash %s switches its flag on, as a link without a query', (hash, on) => {
+    expect(readUrlOptions('', hash)).toEqual({ ...DEFAULT_OPTIONS, ...on });
+  });
+
+  test('a hash flag adds to the query’s options', () => {
+    expect(readUrlOptions('?hunt=3&mute=1', '#tester')).toEqual({
+      ...DEFAULT_OPTIONS,
+      hunt: 3,
+      mute: true,
+      tester: true,
+    });
+  });
+
+  test.each([
+    ['empty', ''],
+    ['a bare mark', '#'],
+    ['another case', '#Tester'],
+    ['two flags', '#tester&autopilot'],
+    ['an option', '#debug'],
+    ['a query in it', '#tester=1'],
+    ['a name', '#__proto__'],
+    ['encoded', '#t%65ster'],
+    ['too long', `#${'t'.repeat(600)}`],
+    ['not text', 42],
+    ['missing', undefined],
+  ])('a hash that is %s switches nothing on', (_case, hash) => {
+    expect(readUrlOptions('', hash)).toEqual(DEFAULT_OPTIONS);
+  });
+
+  test.each(['?tester=true', '?tester=yes', '?tester=01', '?tester=1&tester=1'])(
+    'the tester switch %s stays off',
+    (query) => {
+      expect(readUrlOptions(query).tester).toBe(false);
+    },
+  );
 
   test('the largest seed is read, the smallest too', () => {
     expect(readUrlOptions('?seed=2147483647').seed).toBe(2_147_483_647);

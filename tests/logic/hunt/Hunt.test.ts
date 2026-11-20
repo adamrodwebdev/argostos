@@ -9,15 +9,18 @@ import { STEP_SECONDS } from '../../../src/rules/world';
 
 const TRUCK = readTruckManifest(manifestJson).geometry;
 
-function hunt(seed: number) {
+function hunt(seed: number, number = 1) {
   const events = new EventBus<HuntEventMap>();
-  const played = new Hunt({ seed, detail: 'standard', truck: TRUCK, events });
+  const played = new Hunt({ seed, detail: 'standard', truck: TRUCK, events, number });
   const pilot = new AutopilotIntent(played, STEP_SECONDS);
   return {
     hunt: played,
     events,
     play: (steps: number) => {
-      for (let i = 0; i < steps; i++) played.step(pilot);
+      for (let i = 0; i < steps; i++) {
+        pilot.act();
+        played.step(pilot);
+      }
     },
   };
 }

@@ -17,10 +17,21 @@ interface Scenario {
   /** How many times slower the processor runs (Chrome's CPU throttling). */
   readonly cpu: number;
   readonly detail: 'coarse' | 'standard' | 'fine';
+  /** The hunt played (3 has every action, two drones, armoured trucks). */
+  readonly hunt: 1 | 3;
 }
 
 const SCENARIOS: readonly Scenario[] = [
-  { name: 'desktop', width: 1280, height: 800, scale: 1, touch: false, cpu: 1, detail: 'standard' },
+  {
+    name: 'desktop',
+    width: 1280,
+    height: 800,
+    scale: 1,
+    touch: false,
+    cpu: 1,
+    detail: 'standard',
+    hunt: 1,
+  },
   {
     name: 'desktop, DPR 2',
     width: 1280,
@@ -29,8 +40,18 @@ const SCENARIOS: readonly Scenario[] = [
     touch: false,
     cpu: 1,
     detail: 'standard',
+    hunt: 1,
   },
-  { name: 'phone', width: 390, height: 844, scale: 2.625, touch: true, cpu: 1, detail: 'standard' },
+  {
+    name: 'phone',
+    width: 390,
+    height: 844,
+    scale: 2.625,
+    touch: true,
+    cpu: 1,
+    detail: 'standard',
+    hunt: 1,
+  },
   {
     name: 'phone, CPU 4×',
     width: 390,
@@ -39,15 +60,27 @@ const SCENARIOS: readonly Scenario[] = [
     touch: true,
     cpu: 4,
     detail: 'standard',
+    hunt: 1,
   },
   {
-    name: 'small phone, CPU 4×',
+    name: 'phone, CPU 4×, hunt 3',
+    width: 390,
+    height: 844,
+    scale: 2.625,
+    touch: true,
+    cpu: 4,
+    detail: 'standard',
+    hunt: 3,
+  },
+  {
+    name: 'small phone, CPU 4×, hunt 3',
     width: 320,
     height: 568,
     scale: 2,
     touch: true,
     cpu: 4,
     detail: 'standard',
+    hunt: 3,
   },
   {
     name: 'phone, CPU 4×, fine sand',
@@ -57,15 +90,7 @@ const SCENARIOS: readonly Scenario[] = [
     touch: true,
     cpu: 4,
     detail: 'fine',
-  },
-  {
-    name: 'phone, CPU 4×, coarse sand',
-    width: 390,
-    height: 844,
-    scale: 2.625,
-    touch: true,
-    cpu: 4,
-    detail: 'coarse',
+    hunt: 1,
   },
 ];
 
@@ -114,7 +139,9 @@ try {
     const page = await context.newPage();
     const session = await context.newCDPSession(page);
     await session.send('Emulation.setCPUThrottlingRate', { rate: scenario.cpu });
-    await page.goto(`${url}?autopilot=1&debug=1&mute=1&detail=${scenario.detail}`);
+    await page.goto(
+      `${url}?autopilot=1&debug=1&mute=1&detail=${scenario.detail}&hunt=${String(scenario.hunt)}`,
+    );
     await page.waitForTimeout(WARM_UP_MS);
     let frameP95 = 0;
     let stepP95 = 0;
