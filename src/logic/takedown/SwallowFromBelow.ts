@@ -143,6 +143,7 @@ class SwallowRun implements RunningTakedown {
       takedown: ID,
       beat,
       truckId: this.truck.id,
+      machine: this.truck.machine,
       x: at?.x ?? this.x,
       z: at?.z ?? this.z,
       strength,

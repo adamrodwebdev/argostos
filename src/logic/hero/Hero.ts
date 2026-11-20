@@ -96,6 +96,21 @@ export class Hero {
     return this.loudness;
   }
 
+  /** A burst of speed (the ram) is driving him on. */
+  get boosting(): boolean {
+    return this.motion.boosting;
+  }
+
+  /** A burst of speed along his way (the ram). */
+  boost(speed: number, seconds: number): void {
+    this.motion.boost(speed, seconds);
+  }
+
+  /** He hit something hard: he keeps only `share` of his speed. */
+  recoil(share: number): void {
+    this.motion.brake(share);
+  }
+
   /** Grains carried round his body (still the desert's sand). */
   get carriedGrains(): number {
     return this.digging.carriedGrains;

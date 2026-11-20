@@ -69,6 +69,8 @@ export class HeroMotion {
   private vx = 0;
   private vz = 0;
   private where: Medium = 'sand';
+  private boostLeft = 0;
+  private boostSpeed = 0;
   private readonly steering: Steering = { heading: 0, throttle: 0 };
   private readonly change: StepChange;
   private readonly dt: number;
@@ -105,15 +107,48 @@ export class HeroMotion {
   get medium(): Medium {
     return this.where;
   }
+  /** A burst of speed (the ram) is driving him on. */
+  get boosting(): boolean {
+    return this.boostLeft > 0;
+  }
+
+  /**
+   * A burst of speed along his way (the ram): at once at `speed`, held for `seconds`, then he
+   * slows back with his weight. In the air it speeds his leap along its course.
+   */
+  boost(speed: number, seconds: number): void {
+    if (!(speed > 0) || !(seconds > 0) || !Number.isFinite(speed + seconds)) return;
+    this.boostSpeed = speed;
+    this.boostLeft = seconds;
+    this.headSpeed = Math.max(this.headSpeed, speed);
+    if (this.where === 'air') {
+      const course = Math.atan2(this.vz, this.vx);
+      const fast = Math.max(Math.hypot(this.vx, this.vz), speed);
+      this.vx = Math.cos(course) * fast;
+      this.vz = Math.sin(course) * fast;
+    }
+  }
+
+  /** He hit something hard: he keeps only `share` of his speed (0 to 1). */
+  brake(share: number): void {
+    if (!Number.isFinite(share)) return;
+    const keep = Math.min(1, Math.max(0, share));
+    this.headSpeed *= keep;
+    this.vx *= keep;
+    this.vz *= keep;
+  }
 
   /** One fixed step: steer, move, and say whether the head left or met the sand. */
   step(intent: SteeringIntent): TransitionId {
     const asked = intent.steer(this.headX, this.headZ, this.steering);
-    return this.where === 'sand' ? this.swim(asked) : this.fly(asked);
+    const transition = this.where === 'sand' ? this.swim(asked) : this.fly(asked);
+    this.boostLeft = Math.max(0, this.boostLeft - this.dt);
+    return transition;
   }
 
   private swim(asked: boolean): TransitionId {
-    const target = asked ? speedFor(this.steering.throttle) : SWIM.cruiseSpeed;
+    const steered = asked ? speedFor(this.steering.throttle) : SWIM.cruiseSpeed;
+    const target = this.boostLeft > 0 ? Math.max(steered, this.boostSpeed) : steered;
     const desired = this.keepInside(asked ? this.steering.heading : this.cruiseHeading());
     this.headSpeed = approach(this.headSpeed, target, this.change);
     this.headHeading = wrap(

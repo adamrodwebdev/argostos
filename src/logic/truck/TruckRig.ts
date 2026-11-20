@@ -18,23 +18,23 @@ export interface TruckStart {
  * a spring and a damper at each axle, squats as it pulls away and dives as it brakes.
  */
 export class TruckRig {
-  readonly direction: Direction;
+  private way: Direction;
   private rear: number;
   private front: number;
   private driven = 0;
   private velocity = 0;
   private acceleration = 0;
-  private readonly rearTyre: SpringCorner;
-  private readonly frontTyre: SpringCorner;
-  private readonly rearAxle: SpringCorner;
-  private readonly frontAxle: SpringCorner;
+  private rearTyre: SpringCorner;
+  private frontTyre: SpringCorner;
+  private rearAxle: SpringCorner;
+  private frontAxle: SpringCorner;
 
   constructor(
     private readonly geometry: TruckGeometry,
     private readonly surface: SandSurface,
     start: TruckStart,
   ) {
-    this.direction = start.direction;
+    this.way = start.direction;
     this.rear = start.x;
     this.front = start.x + start.direction * geometry.wheelbaseM;
     const rearZ = this.wheelRest(this.rear);
@@ -45,6 +45,10 @@ export class TruckRig {
     this.frontAxle = new SpringCorner(frontZ, SUSPENSION);
   }
 
+  /** Which way it drives (+1 to the right, −1 to the left). */
+  get direction(): Direction {
+    return this.way;
+  }
   get rearX(): number {
     return this.rear;
   }
@@ -78,19 +82,37 @@ export class TruckRig {
     const dv = Math.max(-DRIVE.brake * dt, Math.min(DRIVE.accel * dt, targetSpeed - this.velocity));
     this.acceleration = dv / dt;
     this.velocity += dv;
-    this.rear += this.direction * this.velocity * dt;
+    this.rear += this.way * this.velocity * dt;
     this.driven += this.velocity * dt;
     const slope = Math.atan2(
       this.frontTyre.height - this.rearTyre.height,
       this.geometry.wheelbaseM,
     );
-    this.front = this.rear + this.direction * this.geometry.wheelbaseM * Math.cos(slope);
+    this.front = this.rear + this.way * this.geometry.wheelbaseM * Math.cos(slope);
     this.rearTyre.step(this.wheelRest(this.rear), dt);
     this.frontTyre.step(this.wheelRest(this.front), dt);
     // It squats as it pulls away and dives as it brakes.
     const squat = DRIVE.squat * this.acceleration;
     this.rearAxle.step(this.rearTyre.height - squat, dt);
     this.frontAxle.step(this.frontTyre.height + DRIVE.diveShare * squat, dt);
+  }
+
+  /**
+   * Stopped, it turns round where it stands (in a side view, its body swaps ends): the front
+   * axle becomes the rear one. A moving truck must stop first; a call while moving does nothing.
+   */
+  turnAround(): void {
+    if (Math.abs(this.velocity) > 0.05) return;
+    this.velocity = 0;
+    this.way = this.way === 1 ? -1 : 1;
+    [this.rear, this.front] = [this.front, this.rear];
+    [this.rearTyre, this.frontTyre] = [this.frontTyre, this.rearTyre];
+    [this.rearAxle, this.frontAxle] = [this.frontAxle, this.rearAxle];
+  }
+
+  /** It ran into something that does not give (a glass wall): it stops dead. */
+  stopDead(): void {
+    this.velocity = 0;
   }
 
   /** A hub rests on the highest sand under its tyre, not on the single point below it. */

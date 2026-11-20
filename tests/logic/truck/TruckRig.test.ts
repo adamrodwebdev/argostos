@@ -1,11 +1,13 @@
 import { describe, expect, test } from 'vitest';
 import manifestJson from '../../../src/assets/truck/manifest.json';
 import { TruckRig } from '../../../src/logic/truck/TruckRig';
-import { DRIVE } from '../../../src/rules/driving';
+import { machineRow } from '../../../src/rules/machines';
 import { readTruckManifest } from '../../../src/rules/truckManifest';
 
 const GEOMETRY = readTruckManifest(manifestJson).geometry;
 const DT = 1 / 60;
+/** The plain hauler's cruising speed (m/s). */
+const CRUISE = machineRow('hauler').cruiseSpeed;
 
 /** Sand flat at z = 0, with a mound 1 m high and 6 m wide around x = 30 when asked. */
 function sand(mound = false) {
@@ -15,7 +17,7 @@ function sand(mound = false) {
 }
 
 function drive(rig: TruckRig, seconds: number): void {
-  for (let i = 0; i < Math.round(seconds / DT); i++) rig.step(DRIVE.cruiseSpeed, DT);
+  for (let i = 0; i < Math.round(seconds / DT); i++) rig.step(CRUISE, DT);
 }
 
 describe('TruckRig: the truck rolls on the sand, its wheels never slide', () => {
@@ -29,7 +31,7 @@ describe('TruckRig: the truck rolls on the sand, its wheels never slide', () => 
   test('it speeds up gently to its cruise and the wheels turn by the distance driven', () => {
     const rig = new TruckRig(GEOMETRY, sand(), { x: 0, direction: 1 });
     drive(rig, 10);
-    expect(rig.speed).toBeCloseTo(DRIVE.cruiseSpeed);
+    expect(rig.speed).toBeCloseTo(CRUISE);
     expect(rig.wheelAngle * GEOMETRY.wheelRadiusM).toBeCloseTo(rig.rearX, 6);
   });
 
@@ -46,7 +48,7 @@ describe('TruckRig: the truck rolls on the sand, its wheels never slide', () => 
     let highest = 0;
     let steepest = 0;
     for (let i = 0; i < 60 * 12; i++) {
-      rig.step(DRIVE.cruiseSpeed, DT);
+      rig.step(CRUISE, DT);
       highest = Math.max(highest, rig.rearHubZ);
       steepest = Math.max(steepest, Math.abs(rig.pitch));
     }

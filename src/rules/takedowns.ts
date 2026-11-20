@@ -77,12 +77,6 @@ export const TAKEDOWNS: ReadonlyMap<TakedownId, TakedownRow> = new Map([
 /** The last prey of a hunt plays in slow motion: how slow, for how long (s of real time). */
 export const FINALE = { scale: 0.3, seconds: 1.1 } as const;
 
-/**
- * P1 has no hunt goals yet (they come in P2): every fifth truck stands for a hunt's last prey,
- * so the slow motion can be seen and tuned.
- */
-export const PREY_PER_HUNT = 5;
-
 /** Debris (wheels, panels): simple rigid bodies on the sand. */
 export const DEBRIS = {
   /** Wreckage pieces at most in the arena (the oldest sinks first). */

@@ -34,16 +34,6 @@ export const DRIVE = {
   squat: 0.025,
   /** The front dives this share of the rear's squat. */
   diveShare: 0.6,
-  /** Cruising speed across the arena (m/s): about 20 km/h. */
-  cruiseSpeed: 5.5,
   /** Points under a wheel where it may rest on the sand (an odd number, centre included). */
   probes: 9,
-} as const;
-
-/** The fleet: one truck at a time crosses the arena in P1. */
-export const FLEET = {
-  /** Seconds before the next truck drives in, after one left or was swallowed. */
-  respawnSeconds: 3,
-  /** The first truck comes in at once. */
-  firstSeconds: 0.5,
 } as const;

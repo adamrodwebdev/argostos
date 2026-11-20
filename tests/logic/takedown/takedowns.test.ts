@@ -146,11 +146,14 @@ describe('Wreckage: debris falls, bounces, rolls, settles and sinks', () => {
 describe('Takedowns: a strategy per takedown, chosen by the registry', () => {
   test('swallowed from below fits a strike rising into the truck, not one coming down', () => {
     const world = arena(5);
-    const truck = new Truck(
-      1,
-      new TruckRig(GEOMETRY, world.surface, { x: 60, direction: 1 }),
-      GEOMETRY,
-    );
+    const truck = new Truck({
+      id: 1,
+      rig: new TruckRig(GEOMETRY, world.surface, { x: 60, direction: 1 }),
+      geometry: GEOMETRY,
+      machine: 'hauler',
+      waveId: 0,
+      arenaWidthM: ARENA.widthM,
+    });
     const registry = new TakedownRegistry([new SwallowFromBelow()]);
     expect(registry.choose(strikeOn(truck, 8))?.id).toBe('swallowFromBelow');
     expect(registry.choose(strikeOn(truck, -8))).toBeNull();
@@ -158,11 +161,14 @@ describe('Takedowns: a strategy per takedown, chosen by the registry', () => {
 
   test('its beats come in order, its wheels and panels fly, and the truck is gone at the end', () => {
     const world = arena(6);
-    const truck = new Truck(
-      7,
-      new TruckRig(GEOMETRY, world.surface, { x: 60, direction: -1 }),
-      GEOMETRY,
-    );
+    const truck = new Truck({
+      id: 7,
+      rig: new TruckRig(GEOMETRY, world.surface, { x: 60, direction: -1 }),
+      geometry: GEOMETRY,
+      machine: 'hauler',
+      waveId: 0,
+      arenaWidthM: ARENA.widthM,
+    });
     const beats: TakedownBeat[] = [];
     world.events.on('takedownBeat', (event) => beats.push(event.beat));
     const run = new SwallowFromBelow().begin(strikeOn(truck, 9), {
@@ -192,11 +198,14 @@ describe('Takedowns: a strategy per takedown, chosen by the registry', () => {
   test('the sand it throws up all comes back down: the desert keeps every grain', () => {
     const world = arena(7);
     const before = world.sand();
-    const truck = new Truck(
-      2,
-      new TruckRig(GEOMETRY, world.surface, { x: 90, direction: 1 }),
-      GEOMETRY,
-    );
+    const truck = new Truck({
+      id: 2,
+      rig: new TruckRig(GEOMETRY, world.surface, { x: 90, direction: 1 }),
+      geometry: GEOMETRY,
+      machine: 'hauler',
+      waveId: 0,
+      arenaWidthM: ARENA.widthM,
+    });
     const run = new SwallowFromBelow().begin(strikeOn(truck, 9), {
       wreckage: world.wreckage,
       thrower: world.thrower,

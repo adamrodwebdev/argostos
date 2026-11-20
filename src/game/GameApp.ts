@@ -102,6 +102,7 @@ export class GameApp implements FrameTarget {
       detail: options.detail,
       truck: manifest.geometry,
       events,
+      number: options.hunt,
     });
     this.stage = new Stage(elements.canvas, window);
     const context = elements.canvas.getContext('2d', { alpha: false });
