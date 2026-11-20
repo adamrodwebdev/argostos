@@ -16,6 +16,8 @@ import { TruckArt } from '../design/truck/TruckArt';
 import type { ViewLayout } from '../design/View';
 import type { HuntEndedEvent } from '../logic/hunt/HuntEvents';
 import { FirstIntent, HeadingIntent, TargetIntent } from '../logic/input/Steering';
+import { SessionLog } from '../logic/session/SessionLog';
+import { Clipboard } from '../platform/Clipboard';
 import { FrameLoop, type FrameTarget } from '../platform/FrameLoop';
 import { KeyInput } from '../platform/KeyInput';
 import { WebPlatform, type PlatformPort } from '../platform/PlatformPort';
@@ -28,6 +30,7 @@ import { MAX_HUNT_NUMBER } from '../rules/hunts';
 import type { KeyCommand } from '../rules/keyInput';
 import type { MouseButton } from '../rules/pointerInput';
 import { readTruckManifest, type SpriteSet, type TruckManifest } from '../rules/truckManifest';
+import { encodeSession } from '../rules/sessionCode';
 import type { UrlOptions } from '../rules/urlOptions';
 import { fullThrottleDistance, pixelsPerMetre, playFrame } from '../rules/viewing';
 import { HuntPlay } from './HuntPlay';
@@ -103,6 +106,10 @@ export class GameApp implements FrameTarget {
   private strikes = 0;
   private readonly loading = new Set<number>();
   private readonly span = { left: 0, right: 0 };
+  /** The session's log for remote testers: in memory only, read as a short code. */
+  private readonly log = new SessionLog();
+  private readonly clipboard: Clipboard;
+  private shownCode = '';
 
   constructor(private readonly start: GameStart) {
     const { elements, options, window, text } = start;
@@ -143,8 +150,9 @@ export class GameApp implements FrameTarget {
         this.sound.unlock();
         this.sound.setMuted(!on);
       },
-      copyCode: () => Promise.resolve(false),
+      copyCode: () => this.clipboard.copy(this.shownCode),
     });
+    this.clipboard = new Clipboard(window);
     elements.root.append(this.hud.element, this.endScreen.element, this.pauseSheet.element);
     this.pointer = new PointerInput(elements.canvas, () => this.stage.area(), {
       button: (pressed) => {
@@ -153,6 +161,7 @@ export class GameApp implements FrameTarget {
       },
       gesture: () => {
         this.hud.firstGesture();
+        this.log.gesture();
       },
     });
     this.keys = new KeyInput(window, (command) => {
@@ -165,6 +174,7 @@ export class GameApp implements FrameTarget {
     this.wireSound();
     this.play = this.newPlay(options.hunt);
     this.setState('playing');
+    this.log.huntBegun(options.hunt);
   }
 
   run(): void {
@@ -192,6 +202,7 @@ export class GameApp implements FrameTarget {
       huntDt: huntMs / 1000,
     });
     this.probe.paint.add(this.loop.now() - stepped);
+    this.log.tick(elapsedMs / 1000);
     this.hud.frame(realDt, play.hunt, { span: this.viewSpan(), crystals: this.crystals() });
     this.readout?.frame(elapsedMs / 1000, play.hunt, play.view.particleCount);
     this.keepArtReady(elapsedMs / 1000);
@@ -212,6 +223,7 @@ export class GameApp implements FrameTarget {
     this.setState('playing');
     this.sound.pause(false);
     this.platform.gameplayStart();
+    this.log.huntBegun(number);
   }
 
   private newPlay(number: number): HuntPlay {
@@ -256,6 +268,7 @@ export class GameApp implements FrameTarget {
       stars: hunt.stats.stars,
     });
     this.setState('ended');
+    this.log.huntEnded(outcome.result, outcome.reason);
     this.start.elements.root.dataset.result = outcome.result;
     this.platform.gameplayStop();
     if (this.start.options.autopilot) {
@@ -269,6 +282,7 @@ export class GameApp implements FrameTarget {
     if (this.state !== 'playing') return;
     this.sound.unlock();
     this.hud.firstGesture();
+    this.log.gesture();
     this.play.hunt.request(action);
   }
 
@@ -284,15 +298,18 @@ export class GameApp implements FrameTarget {
   private pause(): void {
     if (this.state !== 'playing') return;
     this.setState('paused');
+    this.log.paused(true);
     this.sound.pause(true);
     this.platform.gameplayStop();
-    this.pauseSheet.show(!this.sound.muted, null);
+    this.shownCode = encodeSession(this.log.facts());
+    this.pauseSheet.show(!this.sound.muted, this.start.options.tester ? this.shownCode : null);
   }
 
   private resume(): void {
     if (this.state !== 'paused') return;
     this.pauseSheet.hide();
     this.setState('playing');
+    this.log.paused(false);
     this.sound.pause(false);
     this.platform.gameplayStart();
   }
@@ -365,6 +382,7 @@ export class GameApp implements FrameTarget {
   /** The finger or the pointer (canvas CSS px) becomes a target in the world, inside the frame. */
   private steer(layout: ViewLayout): void {
     this.heading.hold(this.keys.dx, this.keys.dz);
+    if (this.keys.dx !== 0 || this.keys.dz !== 0) this.log.gesture();
     if (!this.pointer.active) {
       this.target.release();
       return;
