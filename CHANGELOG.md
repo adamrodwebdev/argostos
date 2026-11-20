@@ -49,7 +49,7 @@ and versions follow [Semantic Versioning](https://semver.org/).
     and fall to rocks or a leaping bite; the scanner of the arena in the top row;
   - the hunt's interface from the validated mockup: the top row, "Spotted", the first hunt's
     hint, the right thumb's cluster (54 to 96 px, never in the left half) with key hints on a
-    computer, the end screen (crystals, machines taken, three stars, Next hunt and Replay) and
+    computer (a fine pointer and no touch screen; off at the first finger), the end screen (crystals, machines taken, three stars, Next hunt and Replay) and
     the failure screen (why, the crystals kept, a four-word tip, Try again), the pause;
   - the mouse's buttons (ram, strike) and the keys Space, J, K and P;
   - a takedown framed mid-screen on a phone held upright, the sky above it;
@@ -72,7 +72,12 @@ and versions follow [Semantic Versioning](https://semver.org/).
   - the autopilot undermines a standing tower when no truck is left (hunt 1: it falls at 8 s,
     crashes at about 10 s), and a second bot style, the sapper (`bot=sapper`), digs sinkholes in
     the trucks' way; `takedown-shots` films with either bot, and from a lead before the
-    takedown.
+    takedown;
+  - the exit gates stand on rock (the user's decision): the last 10 m before each gate are the
+    Company's concrete down to the bedrock, a wall to Argostos, edged with a striped kerb; no pit
+    or cave-in forms there, so a fleeing truck reaches its gate unless he stops it first;
+  - the tester's and our filming flags also read from the URL's hash (`#tester`, `#autopilot`,
+    `#sapper`), for links that carry no query string, through the same allow-list.
 
 ### Changed
 

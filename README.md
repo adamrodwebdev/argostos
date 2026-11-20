@@ -51,7 +51,11 @@ P2, the hunt:
   the speed of their fall. One pass's cave-in only jolts it; a fall of more than about 1.5 m
   takes plate off (its number shows), and a fall of about 3 m or a nose-dive past 30° plays
   **the fall**, a takedown of its own (the wreck tumbles, breaks and sinks). At a wall too steep
-  to climb a truck is stuck, its wheels spinning in a spray of dust.
+  to climb a truck is stuck, its wheels spinning in a spray of dust. The Company builds its
+  **exit gates on rock**: the last 10 m before each gate are concrete down to the bedrock (grey,
+  edged with a striped kerb, as wide as the striped exits on the scanner), a wall to Argostos,
+  so no pit or cave-in forms there and a fleeing truck always reaches its gate unless he stops
+  it first.
 - **The drilling tower** of the first minute (and one in each later hunt): built level on the
   dunes, it leans as the sand under one side of its base drops, and past 6° it topples: its
   cables snap in sparks, it crashes on the dunes, twists and sinks. Its plate (200, a bar) can
@@ -86,7 +90,10 @@ P2, the hunt:
 
 ## URL options
 
-Read strictly at the door; a value that does not fit keeps its default.
+Read strictly at the door; a value that does not fit keeps its default. A link that cannot carry
+a query string (an artifact viewer passes only a plain `#name`) switches one flag on with its
+hash, read through the same allow-list: `#tester` (the tester's code in the pause), and for our
+own films `#autopilot` and `#sapper` (the autopilot, as the sapper).
 
 | Option      | Values                       | Default    | What it does                                                         |
 | ----------- | ---------------------------- | ---------- | -------------------------------------------------------------------- |
