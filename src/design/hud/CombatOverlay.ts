@@ -9,6 +9,7 @@ export interface OverlaySource {
   /** The machines on the sand and in the air, with their plate. */
   trucks(): readonly Target[];
   drones(): readonly Target[];
+  towers(): readonly Target[];
   /** The hero's head (m) and his body's radius: no number covers him. */
   readonly hero: { readonly x: number; readonly z: number; readonly radius: number };
 }
@@ -161,6 +162,7 @@ export class CombatOverlay {
     const width = Math.min(BAR_MAX_PX, Math.max(BAR_MIN_PX, BAR_PER_METRE * cssPpm)) * r;
     this.drawBarsOf(context, view, this.options.source.trucks(), width);
     this.drawBarsOf(context, view, this.options.source.drones(), width);
+    this.drawBarsOf(context, view, this.options.source.towers(), width);
   }
 
   private drawBarsOf(

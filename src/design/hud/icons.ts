@@ -19,6 +19,7 @@ export const ICON_IDS = [
   'crystal',
   'truck',
   'drone',
+  'tower',
   'eye',
   'breath',
   'star',
@@ -58,6 +59,10 @@ const SHAPES: ReadonlyMap<IconId, IconShape> = new Map<IconId, IconShape>([
       ],
       circles: [[12, 17, 1.6]],
     },
+  ],
+  [
+    'tower',
+    { stroke: ['M10.6 2h2.8l3.6 18.5H7z', 'M8.8 9.5h6.4M8 14.5h8M4.5 21.5h15'], strokeWidth: 2 },
   ],
   [
     'eye',

@@ -11,6 +11,7 @@ import { HeroPainter } from './hero/HeroPainter';
 import { CombatOverlay } from './hud/CombatOverlay';
 import type { ScreenBox } from './hud/labelPlacement';
 import { DronePainter } from './machines/DronePainter';
+import { TowerPainter } from './machines/TowerPainter';
 import { ArenaMarksPainter } from './painters/ArenaMarksPainter';
 import { BackdropPainter } from './painters/BackdropPainter';
 import { OutsideSandPainter } from './painters/OutsideSandPainter';
@@ -55,8 +56,8 @@ export interface ViewFrame {
 const JAWS_SENSE_M = 7;
 
 /**
- * Draws a hunt: the camera frames the hero, then the sky and far dunes, the sand, the trucks
- * and their wrecks, the hero, the thrown sand and the effects. Actors stay inside the playing
+ * Draws a hunt: the camera frames the hero, then the sky and far dunes, the sand, the drilling
+ * towers, the trucks and their wrecks, the hero, the thrown sand and the effects. Actors stay inside the playing
  * frame (2:1 at most); beyond it the art goes on, dimmed. It listens to the hunt's events for
  * its effects and sounds, and decides nothing in the hunt.
  */
@@ -75,6 +76,7 @@ export class GameView {
   private readonly outside: OutsideSandPainter;
   private readonly marks: ArenaMarksPainter;
   private readonly drones: DronePainter;
+  private readonly towers: TowerPainter;
   private readonly actions: ActionPainter;
   private readonly overlay: CombatOverlay;
   private readonly box: Box = { left: 0, right: 0, bottom: 0, top: 0 };
@@ -128,9 +130,21 @@ export class GameView {
       effects: this.effects,
       sound: options.sound,
     });
+    this.towers = new TowerPainter({
+      towers: () => hunt.towerList,
+      events,
+      effects: this.effects,
+      sound: options.sound,
+      ground: this.ground,
+    });
     this.actions = new ActionPainter({ dome: hunt.dome, rocks: hunt.rocks, ground: this.ground });
     this.overlay = new CombatOverlay({
-      source: { trucks: () => hunt.trucks, drones: () => hunt.droneList, hero: hunt.hero },
+      source: {
+        trucks: () => hunt.trucks,
+        drones: () => hunt.droneList,
+        towers: () => hunt.towerList,
+        hero: hunt.hero,
+      },
       events,
       keepOut: options.keepOut,
       ceiling: options.ceiling,
@@ -181,6 +195,7 @@ export class GameView {
     this.drones.drawRings(context, view);
     this.marks.drawVibrations(context, view);
     this.marks.drawGates(context, view);
+    this.towers.draw(context, view);
     this.trucks.draw(context, view, blend);
     this.actions.draw(context, view);
     this.hero.draw(context, view, blend);

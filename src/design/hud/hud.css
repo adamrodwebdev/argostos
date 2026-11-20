@@ -193,6 +193,9 @@
 .scan .it.m.stalled {
   opacity: 0.45;
 }
+.scan .it.done {
+  opacity: 0.35;
+}
 .scan .it.d {
   top: 9px;
   color: var(--g-threat);

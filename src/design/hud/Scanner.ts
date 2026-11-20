@@ -3,9 +3,10 @@ import { ARENA } from '../../rules/world';
 import { create } from './dom';
 import { icon } from './icons';
 
-/** Icons kept ready for trucks and drones (more than a hunt ever shows at once). */
+/** Icons kept ready for trucks, drones and towers (more than a hunt ever shows at once). */
 const TRUCK_MARKS = 12;
 const DRONE_MARKS = 3;
+const TOWER_MARKS = 2;
 /** A mark moves on the strip only when it moved this much (% of the strip): fewer writes. */
 const MOVE_PCT = 0.25;
 
@@ -18,7 +19,8 @@ export interface ViewSpan {
 /**
  * The arena's scanner in the top row (the mockup's choice over arrows at the edges): the whole
  * arena in a strip, its two striped exits, the window the screen shows, the trucks (with speed
- * lines while they run for an exit), the drones, and Argostos. Its frame turns cyan while an
+ * lines while they run for an exit), the drones, the drilling towers (dimmed once fallen), and
+ * Argostos. Its frame turns cyan while an
  * alarm is up. Marks are made once and moved by their `left` (no element made per frame).
  */
 export class Scanner {
@@ -27,6 +29,7 @@ export class Scanner {
   private readonly hero: HTMLElement;
   private readonly trucks: HTMLElement[] = [];
   private readonly drones: HTMLElement[] = [];
+  private readonly towers: HTMLElement[] = [];
   private readonly lastLeft = new Map<HTMLElement, number>();
 
   constructor(document: Document, label: string) {
@@ -53,6 +56,13 @@ export class Scanner {
       this.drones.push(mark);
       this.element.append(mark);
     }
+    for (let i = 0; i < TOWER_MARKS; i++) {
+      const mark = create(document, 'i', { className: 'it m t' });
+      mark.append(icon(document, 'tower'));
+      mark.hidden = true;
+      this.towers.push(mark);
+      this.element.append(mark);
+    }
     this.hero = create(document, 'i', { className: 'it w' });
     this.element.append(this.hero);
   }
@@ -77,6 +87,15 @@ export class Scanner {
       this.place(mark, drone.x);
     }
     for (let i = n; i < this.drones.length; i++) this.drones[i]!.hidden = true;
+    n = 0;
+    for (const tower of hunt.towerList) {
+      if (n >= this.towers.length) break;
+      const mark = this.towers[n++]!;
+      mark.hidden = false;
+      this.place(mark, tower.x);
+      mark.classList.toggle('done', tower.fell);
+    }
+    for (let i = n; i < this.towers.length; i++) this.towers[i]!.hidden = true;
     this.place(this.hero, hunt.hero.x);
     this.hero.classList.toggle('left', Math.cos(hunt.hero.heading) < 0);
     const left = Math.max(0, span.left);
