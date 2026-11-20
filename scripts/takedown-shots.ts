@@ -1,9 +1,10 @@
 /*
- * Films a takedown frame by frame (`npm run takedown-shots -- <url> <out-dir> [bite]`): the game
- * on its autopilot, its clock driven by Playwright (so every run films the same frames),
- * screenshots every 80 ms of game time from the chosen bite (the 5th is a hunt's last prey, in
- * slow motion), then one contact sheet of them all. The page must already be served
- * (`npm run dev` or `npm run preview`). Output goes to <out-dir>; delete it once looked at.
+ * Films a takedown frame by frame (`npm run takedown-shots -- <url> <out-dir> [bite] [hunt]`):
+ * the game on its autopilot, its clock driven by Playwright (so every run films the same
+ * frames), screenshots every 80 ms of game time from the chosen bite of the chosen hunt (1 by
+ * default; the hunt's last prey plays in slow motion), then one contact sheet of them all, on
+ * a phone held upright. The page must already be served (`npm run dev` or `npm run preview`).
+ * Output goes to <out-dir>; delete it once looked at.
  */
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -26,6 +27,11 @@ if (!/^[1-9]$/.test(biteText)) {
   process.exit(2);
 }
 const bite = biteText;
+const huntText = argument(5, '1');
+if (!/^[1-9]$/.test(huntText)) {
+  console.error(`The hunt to film is a number from 1 to 9: ${huntText}`);
+  process.exit(2);
+}
 if (!/^http:\/\/localhost:\d{2,5}\/$/.test(url)) {
   console.error(`Only a local server is filmed: ${url}`);
   process.exit(2);
@@ -41,7 +47,7 @@ try {
   // Installed fake time still flows at the real pace: paused, it moves only when told to.
   await page.clock.install({ time: 0 });
   await page.clock.pauseAt(1000);
-  await page.goto(`${url}?autopilot=1&mute=1&seed=147`);
+  await page.goto(`${url}?autopilot=1&mute=1&seed=147&hunt=${huntText}`);
   let waited = 0;
   const strikes = async () =>
     page.evaluate(() => document.querySelector('#game')?.getAttribute('data-strikes'));
