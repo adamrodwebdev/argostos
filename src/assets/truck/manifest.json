@@ -1,0 +1,123 @@
+{
+ "generator": "hauler_sprites.py",
+ "view": "the truck seen square from its left, driving right (screen right = -Y), orthographic",
+ "master_ppm": 64,
+ "scales": [
+  64,
+  32
+ ],
+ "quality": "final",
+ "webp_quality": 85,
+ "frame_m": {
+  "left_y": 6.1615,
+  "top_z": 6.4,
+  "width": 13.09375,
+  "height": 6.5625,
+  "box_lo": [
+   -3.6,
+   -6.82,
+   -0.038
+  ],
+  "box_hi": [
+   3.6,
+   6.062,
+   6.3
+  ]
+ },
+ "hubs_m": {
+  "front": [
+   -2.3,
+   1.45
+  ],
+  "rear": [
+   2.9,
+   1.45
+  ]
+ },
+ "wheel": {
+  "radius_m": 1.45,
+  "box_m": 3.0625,
+  "frames": 12,
+  "period_deg": 45.0,
+  "step_deg": 3.75,
+  "turn": "clockwise on screen for rolling right"
+ },
+ "light": {
+  "sun_elevation": 50.0,
+  "sun_azimuth": 32.0,
+  "sun_w_m2": 4.169,
+  "sky_strength": 0.49,
+  "meter_before": 0.17272,
+  "view": "AgX - Medium High Contrast",
+  "exposure": 0.0
+ },
+ "t_render": {
+  "reference": 6.7,
+  "body": 6.6,
+  "wheel_frames": 15.0
+ },
+ "files": {
+  "64": {
+   "body": {
+    "file": "hauler-body-64.webp",
+    "w": 838,
+    "h": 420,
+    "bytes": 30096,
+    "png_bytes": 445708
+   },
+   "reference": {
+    "file": "hauler-reference-64.webp",
+    "w": 838,
+    "h": 420,
+    "bytes": 40688,
+    "png_bytes": 517652
+   },
+   "wheel": {
+    "file": "hauler-wheel-64.webp",
+    "w": 196,
+    "h": 196,
+    "bytes": 8298,
+    "png_bytes": 71831
+   },
+   "wheel_frames": {
+    "file": "hauler-wheel-frames-64.webp",
+    "w": 2352,
+    "h": 196,
+    "bytes": 91942,
+    "png_bytes": 843921,
+    "frame_w": 196
+   }
+  },
+  "32": {
+   "body": {
+    "file": "hauler-body-32.webp",
+    "w": 419,
+    "h": 210,
+    "bytes": 11592,
+    "png_bytes": 120329
+   },
+   "reference": {
+    "file": "hauler-reference-32.webp",
+    "w": 419,
+    "h": 210,
+    "bytes": 16046,
+    "png_bytes": 142156
+   },
+   "wheel": {
+    "file": "hauler-wheel-32.webp",
+    "w": 98,
+    "h": 98,
+    "bytes": 3334,
+    "png_bytes": 20761
+   },
+   "wheel_frames": {
+    "file": "hauler-wheel-frames-32.webp",
+    "w": 1176,
+    "h": 98,
+    "bytes": 34816,
+    "png_bytes": 236504,
+    "frame_w": 98
+   }
+  }
+ }
+}
