@@ -250,6 +250,7 @@ export class GameApp implements FrameTarget {
       seed: options.seed,
       detail: options.detail,
       autopilot: options.autopilot,
+      bot: options.bot,
       truck: this.manifest.geometry,
       context: this.context,
       art: this.art,

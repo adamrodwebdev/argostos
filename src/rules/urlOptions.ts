@@ -8,6 +8,10 @@ import { GRID_DETAILS, type GridDetail } from './world';
  * throws: a hand-typed or hostile address still opens the game.
  */
 
+/** The autopilot's ways of playing: the hunter takes the trucks, the sapper only digs pits. */
+export const BOT_STYLES = ['hunter', 'sapper'] as const;
+export type BotStyle = (typeof BOT_STYLES)[number];
+
 export interface UrlOptions {
   /** The hunt's seed: the same seed replays the same desert. */
   readonly seed: number;
@@ -17,6 +21,8 @@ export interface UrlOptions {
   readonly debug: boolean;
   /** The hero swims a scripted path on his own (measurements, smoke tests). */
   readonly autopilot: boolean;
+  /** How the autopilot plays (`bot=sapper`: films of the moving ground). */
+  readonly bot: BotStyle;
   /** The game starts muted (recordings, tests). */
   readonly mute: boolean;
   /** The hunt to start with (tests, the review of a later hunt): 1 for a first visit. */
@@ -30,6 +36,7 @@ export const DEFAULT_OPTIONS: UrlOptions = {
   detail: 'standard',
   debug: false,
   autopilot: false,
+  bot: 'hunter',
   mute: false,
   hunt: 1,
   tester: false,
@@ -70,6 +77,7 @@ export function readUrlOptions(search: unknown): UrlOptions {
     ),
     debug: flag(params, 'debug'),
     autopilot: flag(params, 'autopilot'),
+    bot: orElse(() => readChoice(single(params, 'bot'), BOT_STYLES, 'bot'), DEFAULT_OPTIONS.bot),
     mute: flag(params, 'mute'),
     hunt: orElse(() => parseNumber(single(params, 'hunt'), HUNT, 'hunt'), DEFAULT_OPTIONS.hunt),
     tester: flag(params, 'tester'),

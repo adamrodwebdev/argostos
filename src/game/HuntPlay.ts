@@ -6,11 +6,13 @@ import { EventBus } from '../logic/EventBus';
 import { FixedStepper } from '../logic/FixedStepper';
 import { Hunt } from '../logic/hunt/Hunt';
 import type { HuntEventMap } from '../logic/hunt/HuntEvents';
-import { AutopilotIntent } from '../logic/input/AutopilotIntent';
+import { AutopilotIntent, type Autopilot } from '../logic/input/AutopilotIntent';
+import { SapperIntent } from '../logic/input/SapperIntent';
 import { IdleIntent, type SteeringIntent } from '../logic/input/Steering';
 import { SeededRandom } from '../logic/SeededRandom';
 import { TimeScale } from '../logic/TimeScale';
 import type { TruckGeometry } from '../rules/truckManifest';
+import type { BotStyle } from '../rules/urlOptions';
 import type { GridDetail } from '../rules/world';
 import { MAX_STEPS_PER_FRAME, STEP_SECONDS } from '../rules/world';
 
@@ -20,6 +22,8 @@ export interface PlaySetup {
   readonly seed: number;
   readonly detail: GridDetail;
   readonly autopilot: boolean;
+  /** How the autopilot plays, when it is on. */
+  readonly bot: BotStyle;
   readonly truck: TruckGeometry;
   readonly context: CanvasRenderingContext2D;
   readonly art: TruckArt;
@@ -42,6 +46,14 @@ export interface WorldPart {
 const EFFECTS_SEED = 0x5eed;
 /** Each hunt number has its own desert (the first keeps the URL's seed). */
 const SEED_STEP = 7919;
+/** The autopilot's ways of playing: one more is one more line here. */
+const BOTS: ReadonlyMap<BotStyle, (hunt: Hunt) => Autopilot> = new Map<
+  BotStyle,
+  (hunt: Hunt) => Autopilot
+>([
+  ['hunter', (hunt) => new AutopilotIntent(hunt, STEP_SECONDS)],
+  ['sapper', (hunt) => new SapperIntent(hunt, STEP_SECONDS)],
+]);
 
 /**
  * One hunt being played: its events, the hunt, its view, its fixed steps and its time (held at
@@ -54,7 +66,7 @@ export class HuntPlay {
   readonly view: GameView;
   readonly time = new TimeScale();
   readonly stepper = new FixedStepper(STEP_SECONDS * 1000, MAX_STEPS_PER_FRAME);
-  private readonly autopilot: AutopilotIntent | null;
+  private readonly autopilot: Autopilot | null;
   private readonly player: SteeringIntent;
   private readonly idle = new IdleIntent();
 
@@ -80,7 +92,7 @@ export class HuntPlay {
     const seed = HuntPlay.seedOf(setup);
     this.events = world.events;
     this.hunt = world.hunt;
-    this.autopilot = setup.autopilot ? new AutopilotIntent(this.hunt, STEP_SECONDS) : null;
+    this.autopilot = setup.autopilot ? (BOTS.get(setup.bot)?.(this.hunt) ?? null) : null;
     this.player = setup.player;
     this.view = new GameView({
       context: setup.context,

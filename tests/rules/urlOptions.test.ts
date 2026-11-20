@@ -8,12 +8,15 @@ describe('readUrlOptions: the URL is an allow-list, read strictly', () => {
 
   test('every option read when it is right', () => {
     expect(
-      readUrlOptions('?seed=2026&detail=fine&debug=1&autopilot=1&mute=1&hunt=3&tester=1'),
+      readUrlOptions(
+        '?seed=2026&detail=fine&debug=1&autopilot=1&bot=sapper&mute=1&hunt=3&tester=1',
+      ),
     ).toEqual({
       seed: 2026,
       detail: 'fine',
       debug: true,
       autopilot: true,
+      bot: 'sapper',
       mute: true,
       hunt: 3,
       tester: true,
@@ -32,6 +35,13 @@ describe('readUrlOptions: the URL is an allow-list, read strictly', () => {
   ])('a hunt that is %s plays the first hunt', (_case, query) => {
     expect(readUrlOptions(query).hunt).toBe(1);
   });
+
+  test.each(['?bot=Sapper', '?bot=digger', '?bot=', '?bot=sapper&bot=hunter', '?bot=__proto__'])(
+    'a bot style %s outside the list keeps the hunter',
+    (query) => {
+      expect(readUrlOptions(query).bot).toBe('hunter');
+    },
+  );
 
   test.each(['?tester=true', '?tester=yes', '?tester=01', '?tester=1&tester=1'])(
     'the tester switch %s stays off',
