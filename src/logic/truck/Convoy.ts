@@ -46,6 +46,7 @@ export class Convoy {
     this.fleeing = true;
     this.turning = false;
     this.cause = cause;
+    for (const truck of this.trucks) truck.run();
   }
 
   /** One step: every truck of it drives at the speed its state asks. */

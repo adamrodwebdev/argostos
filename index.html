@@ -111,9 +111,10 @@
         text-align: center;
         text-wrap: balance;
       }
+      /* The debug readout (?debug=1), under the hunt's top row. */
       .readout {
         position: absolute;
-        top: max(env(safe-area-inset-top), 0.75rem);
+        top: calc(max(env(safe-area-inset-top), 0.75rem) + 7.5rem);
         left: max(env(safe-area-inset-left), calc(var(--side) + 0.75rem));
         box-sizing: border-box;
         max-width: calc(100% - 2 * var(--side) - 5.25rem);
@@ -130,36 +131,6 @@
           monospace;
         white-space: pre-wrap;
         pointer-events: none;
-      }
-      /* The one control in P1: sound on or off (48 px, the size of a game's touch control). */
-      .sound {
-        position: absolute;
-        top: max(env(safe-area-inset-top), 0.75rem);
-        right: max(env(safe-area-inset-right), calc(var(--side) + 0.75rem));
-        display: grid;
-        place-items: center;
-        width: 3rem;
-        height: 3rem;
-        padding: 0;
-        border: 0;
-        border-radius: 0.75rem;
-        background: var(--panel);
-        box-shadow: inset 0 0 0 1px var(--edge);
-        color: var(--ink);
-        touch-action: manipulation;
-      }
-      .sound svg {
-        width: 1.5rem;
-        height: 1.5rem;
-        fill: currentColor;
-      }
-      .sound[aria-pressed='true'] .waves,
-      .sound[aria-pressed='false'] .slash {
-        display: none;
-      }
-      .sound:focus-visible {
-        outline: 3px solid var(--accent);
-        outline-offset: 3px;
       }
       [hidden] {
         display: none !important;
@@ -188,34 +159,6 @@
       ></canvas>
       <p class="status" id="status" role="status">Loading the desert…</p>
       <pre class="readout" id="readout" hidden></pre>
-      <button
-        class="sound"
-        id="sound"
-        type="button"
-        aria-pressed="false"
-        aria-label="Mute the sound"
-        hidden
-      >
-        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-          <path d="M3 9h4l5-4v14l-5-4H3z" />
-          <path
-            class="waves"
-            d="M15.5 8.5a5 5 0 0 1 0 7M18 6a8.5 8.5 0 0 1 0 12"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-          />
-          <path
-            class="slash"
-            d="M15 9l6 6M21 9l-6 6"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-          />
-        </svg>
-      </button>
     </main>
     <script type="module" src="/src/main.ts"></script>
   </body>

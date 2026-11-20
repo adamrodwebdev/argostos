@@ -21,6 +21,45 @@ const EN = {
   readoutEaten: 'eaten',
   readoutParticles: 'particles',
   soundMute: 'Mute the sound',
+  pause: 'Pause',
+  paused: 'Paused',
+  resume: 'Resume',
+  restartHunt: 'Restart hunt',
+  close: 'Close',
+  sound: 'Sound',
+  scanner: 'Arena scanner',
+  crystals: 'Crystals',
+  spotted: 'Spotted',
+  hintFollowVibrations: 'Follow the vibrations',
+  ram: 'Ram',
+  strikeTail: 'Strike: tail',
+  strikeRock: 'Strike: rock',
+  breath: 'Breathe glass',
+  huntKicker: 'Glass Desert · Hunt {n}',
+  huntComplete: 'Hunt complete',
+  convoyGotAway: 'The convoy got away',
+  truckGotAway: 'The truck got away',
+  whySpotted: 'Spotted by sonar',
+  whyAttacked: 'They fled your attack',
+  whyEscaped: 'A prey reached the exit',
+  tipSpotted: 'Move slowly near drones',
+  tipAttacked: 'Trap convoys in glass',
+  tipEscaped: 'Bite before the exits',
+  kept: 'kept',
+  crystalsEarned: 'Crystals earned',
+  trucksTaken: 'Trucks taken',
+  dronesDowned: 'Drones downed',
+  nextHunt: 'Next hunt',
+  replay: 'Replay',
+  tryAgain: 'Try again',
+  starUnseen: 'Unseen',
+  starDoubleBite: 'Double bite',
+  starGlassOnly: 'Glass only',
+  starWon: 'won',
+  starMissed: 'not won',
+  testerCode: 'Tester code',
+  copy: 'Copy',
+  copied: 'Copied',
 } as const;
 
 export type TextKey = keyof typeof EN;
@@ -53,5 +92,10 @@ export class Text {
   /** A whole number, grouped for this language (163,840). */
   wholeOf(value: number): string {
     return this.whole.format(value);
+  }
+
+  /** A string with its `{n}` replaced by a whole number in this language. */
+  withNumber(key: TextKey, n: number): string {
+    return this.get(key).replace('{n}', this.wholeOf(n));
   }
 }

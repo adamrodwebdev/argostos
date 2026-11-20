@@ -34,6 +34,14 @@ const PANELS: readonly (readonly [number, number, number, number])[] = [
   [0.66, 0.3, 0.14, 0.25],
   [0.15, 0.22, 0.17, 0.2],
 ];
+/** The armoured truck's plates along its bed: where each starts and how wide (m from the rear hub). */
+const PLATES: readonly (readonly [number, number])[] = [
+  [-2.9, 2.3],
+  [-0.45, 2.3],
+  [2.0, 2.3],
+];
+/** Rivets along a plate (shares of its width). */
+const RIVETS: readonly number[] = [0.12, 0.5, 0.88];
 /** The sand's rim is sampled this often (m) for the clip that sinks wrecks into it. */
 const RIM_STEP_M = 0.25;
 
@@ -135,6 +143,7 @@ export class TruckPainter {
     context.scale(rig.direction, 1);
     context.rotate(-rig.pitch);
     this.drawBody(context, view, set);
+    if (truck.row.plated) this.drawPlates(context, view.scale);
     context.restore();
     for (const [x, z] of [
       [rearX, rig.rearWheelZ],
@@ -252,6 +261,24 @@ export class TruckPainter {
       body.width * k,
       body.height * k,
     );
+  }
+
+  /**
+   * The armoured truck's steel plates, bolted over the bed (drawn in code over the sprite until
+   * the 3D team renders the variant): from the rear hub, in metres.
+   */
+  private drawPlates(context: CanvasRenderingContext2D, s: number): void {
+    for (const [left, width] of PLATES) {
+      context.fillStyle = 'rgb(74 79 86 / 0.94)';
+      context.fillRect(left * s, -4.3 * s, width * s, 2.2 * s);
+      context.fillStyle = 'rgb(150 156 164 / 0.9)';
+      context.fillRect(left * s, -4.3 * s, width * s, 0.14 * s);
+      context.fillStyle = 'rgb(28 30 34 / 0.9)';
+      for (const along of RIVETS) {
+        context.fillRect((left + along * width) * s - 0.06 * s, -4.0 * s, 0.12 * s, 0.12 * s);
+        context.fillRect((left + along * width) * s - 0.06 * s, -2.4 * s, 0.12 * s, 0.12 * s);
+      }
+    }
   }
 
   /** One frame of the wheel's strip, plus the turn left between two frames (clockwise rolling right). */

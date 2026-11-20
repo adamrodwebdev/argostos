@@ -18,5 +18,13 @@
         "no-await-in-loop": "off"
       }
     }
-  ]
+  ],
+  "rules": {
+    "import/no-unassigned-import": [
+      "error",
+      {
+        "allow": ["**/*.css"]
+      }
+    ]
+  }
 }

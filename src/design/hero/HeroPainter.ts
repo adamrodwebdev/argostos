@@ -1,3 +1,4 @@
+import { noiseRadius } from '../../rules/sonar';
 import { bodyRadiusAt } from '../../rules/swimming';
 import { GLASS } from '../palette';
 import type { View } from '../View';
@@ -29,9 +30,10 @@ const IDLE_WAVE = 0.7;
 /** The paddles beat along the body with this wavelength (m) and swing (radians). */
 const PADDLE_WAVE_M = 2.6;
 const PADDLE_SWING = 0.38;
-/** Rings of noise round his head (m, at full noise), and how fast they spread (per second). */
-const NOISE_RINGS = Float64Array.from([2.4, 4.2, 6.2]);
-const NOISE_PULSE = 1.4;
+/** Rings of noise round his head, and how fast they spread (per second). */
+const NOISE_RING_COUNT = 3;
+const NOISE_PULSE = 1.1;
+const NOISE_COLOUR = `rgb(${GLASS.noise.join(' ')})`;
 /** The glass needles of his crest, near the head. */
 const CREST_NEEDLES = 9;
 
@@ -151,20 +153,22 @@ export class HeroPainter {
     }
   }
 
+  /**
+   * His rings of noise, spreading from his head out to the reach the sonar hears (rules/sonar):
+   * when they touch a drone's rings he is spotted. A quiet hero has none.
+   */
   private drawNoise(context: CanvasRenderingContext2D, view: View): void {
-    const { noise } = this.hero;
-    if (noise < 0.04) return;
-    const [r, g, b] = GLASS.noise;
+    const reach = noiseRadius(this.hero.noise) * view.scale;
+    if (reach <= 0) return;
     const x = this.px[0]!;
     const y = this.py[0]!;
-    const pulse = (this.time * NOISE_PULSE) % 1;
-    context.strokeStyle = `rgb(${r} ${g} ${b})`;
-    context.lineWidth = Math.max(1, 0.08 * view.scale);
-    for (let i = 0; i < NOISE_RINGS.length; i++) {
-      const radius = (NOISE_RINGS[i]! + pulse * 1.8) * (0.35 + 0.65 * noise) * view.scale;
-      context.globalAlpha = noise * (0.5 - i * 0.14) * (1 - pulse * 0.6);
+    context.strokeStyle = NOISE_COLOUR;
+    context.lineWidth = Math.max(1.2, 0.1 * view.scale);
+    for (let i = 0; i < NOISE_RING_COUNT; i++) {
+      const spread = ((this.time * NOISE_PULSE + i / NOISE_RING_COUNT) % 1) * 0.7 + 0.3;
+      context.globalAlpha = 0.75 * (1 - spread) + 0.12;
       context.beginPath();
-      context.arc(x, y, radius, 0, Math.PI * 2);
+      context.arc(x, y, reach * spread, 0, Math.PI * 2);
       context.stroke();
     }
     context.globalAlpha = 1;

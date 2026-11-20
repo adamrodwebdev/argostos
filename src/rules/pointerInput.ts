@@ -54,3 +54,17 @@ export function readPointer(raw: RawPointer, area: PlayArea): PointerSample | nu
     };
   }, null);
 }
+
+/** The mouse's buttons the game reads: the left one rams, the right one strikes. */
+export type MouseButton = 'primary' | 'secondary';
+
+const MOUSE_BUTTONS: ReadonlyMap<number, MouseButton> = new Map<number, MouseButton>([
+  [0, 'primary'],
+  [2, 'secondary'],
+]);
+
+/** A mouse button from an event's `button` (an integer), or null for any other value. */
+export function readMouseButton(raw: unknown): MouseButton | null {
+  if (typeof raw !== 'number' || !Number.isInteger(raw)) return null;
+  return MOUSE_BUTTONS.get(raw) ?? null;
+}

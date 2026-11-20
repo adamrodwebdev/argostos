@@ -11,10 +11,11 @@ export type MachineId = (typeof MACHINE_IDS)[number];
 export type MachineKind = 'truck' | 'drone';
 
 /**
- * The parts a machine is made of. P2 has one, the whole body; later a truck's tyres or a
- * drone's camera will be parts of their own, each with its plate and what breaking it does.
+ * The parts a machine is made of. In P2 every machine has one, its whole body; the tyres and
+ * the camera are the ids the later parts take (a truck's tyre, a drone's camera), each with
+ * its plate and what breaking it does. No row uses them yet.
  */
-export const PART_IDS = ['body'] as const;
+export const PART_IDS = ['body', 'tyre', 'camera'] as const;
 export type PartId = (typeof PART_IDS)[number];
 
 /**

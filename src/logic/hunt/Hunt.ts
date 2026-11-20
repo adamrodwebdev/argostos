@@ -205,6 +205,11 @@ export class Hunt {
     return this.drones.spotted;
   }
 
+  /** A spot's alarm is up now (the drones listen again once it is down). */
+  get alarmed(): boolean {
+    return this.drones.alarmed;
+  }
+
   /** The end was told: the end screen shows while the world goes on. */
   get isOver(): boolean {
     return this.director.isOver;

@@ -1,10 +1,25 @@
-import { readPointer, type PlayArea, type PointerSample } from '../rules/pointerInput';
+import {
+  readMouseButton,
+  readPointer,
+  type MouseButton,
+  type PlayArea,
+  type PointerSample,
+} from '../rules/pointerInput';
+
+/** What the pointer tells the game besides where it steers. */
+export interface PointerHandlers {
+  /** A mouse button pressed on the play area (left: ram, right: strike). */
+  button(button: MouseButton): void;
+  /** The player touched or moved over the game (the first gesture). */
+  gesture(): void;
+}
 
 /**
  * The finger or the pointer that steers, read from the canvas's pointer events at the door
  * (`readPointer`): a mouse steers by hovering, a finger or a pen while it touches. Only the first
- * finger steers (a second one will breathe glass in P2). A cancelled touch (iOS taking it over
- * for a gesture) counts as lifted.
+ * finger steers (the thumb's buttons are elements of their own). A mouse's left button rams and
+ * its right button strikes. A cancelled touch (iOS taking it over for a gesture) counts as
+ * lifted.
  */
 export class PointerInput {
   private steering: number | null = null;
@@ -14,6 +29,7 @@ export class PointerInput {
   constructor(
     private readonly canvas: HTMLCanvasElement,
     private readonly area: () => PlayArea,
+    private readonly handlers: PointerHandlers,
   ) {
     canvas.addEventListener('pointerdown', this.down);
     canvas.addEventListener('pointermove', this.move);
@@ -40,6 +56,11 @@ export class PointerInput {
   private readonly down = (event: PointerEvent): void => {
     const sample = this.read(event);
     if (!sample) return;
+    this.handlers.gesture();
+    if (sample.kind === 'mouse') {
+      const pressed = readMouseButton(event.button);
+      if (pressed) this.handlers.button(pressed);
+    }
     if (this.steering !== null && this.steering !== sample.id) return;
     this.steering = sample.id;
     this.x = sample.x;
@@ -51,7 +72,10 @@ export class PointerInput {
   private readonly move = (event: PointerEvent): void => {
     const sample = this.read(event);
     if (!sample) return;
-    if (sample.kind === 'mouse' && this.steering === null) this.steering = sample.id;
+    if (sample.kind === 'mouse' && this.steering === null) {
+      this.steering = sample.id;
+      this.handlers.gesture();
+    }
     if (this.steering !== sample.id) return;
     this.x = sample.x;
     this.y = sample.y;

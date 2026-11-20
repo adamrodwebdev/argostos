@@ -1,4 +1,4 @@
-/** The sounds of a takedown (a real recording can replace each cue later). */
+/** The hunt's sounds (a real recording can replace each cue later). */
 export const SOUND_CUES = [
   'impact',
   'crunch',
@@ -6,6 +6,11 @@ export const SOUND_CUES = [
   'whoosh',
   'crackle',
   'sandBurst',
+  // The sonar's ping, the alarm when it hears the hero, the dome's chime, the tail's swish.
+  'ping',
+  'alarm',
+  'chime',
+  'swish',
 ] as const;
 export type SoundCue = (typeof SOUND_CUES)[number];
 

@@ -1,47 +1,12 @@
 import { Element } from '../../rules/elements';
-import { STRATA_COUNT, STRATA_DEPTHS } from '../../rules/terrain';
 import type { GridMeasures } from '../../rules/world';
 import type { SandGrid } from '../../logic/sand/SandGrid';
 import { CHUNK_SHIFT } from '../../logic/sand/SandGrid';
-import { stratumOf } from '../../logic/sand/TerrainBuilder';
-import {
-  DEPTH_SHADOW,
-  GRAIN_CONTRAST,
-  ROCK,
-  SAND_DEPTH_STOPS,
-  SAND_RIM,
-  STRATUM_CONTRAST,
-  type Rgb,
-} from '../palette';
+import { SAND_RIM } from '../palette';
 import type { View } from '../View';
+import { SandColours } from './SandColours';
 
-/** Shades a grain may carry: 16 strata × 4 grains. */
-const SHADES = 64;
 const CHUNK = 1 << CHUNK_SHIFT;
-
-/** A colour packed for an `ImageData` seen as 32-bit words (little-endian: ABGR). */
-function pack({ r, g, b }: Rgb, light: number): number {
-  const c = (v: number) => Math.max(0, Math.min(255, Math.round(v * light)));
-  return ((255 << 24) | (c(b) << 16) | (c(g) << 8) | c(r)) >>> 0;
-}
-
-/** The sand's colour at a depth (m), along the mockup's four stops over 46 m. */
-function sandAt(depth: number): Rgb {
-  const stops = SAND_DEPTH_STOPS;
-  const t = Math.min(0.999, Math.max(0, depth / 46)) * (stops.length - 1);
-  const i = Math.floor(t);
-  const a = stops[i]!;
-  const b = stops[Math.min(stops.length - 1, i + 1)]!;
-  const f = t - i;
-  return { r: a.r + (b.r - a.r) * f, g: a.g + (b.g - a.g) * f, b: a.b + (b.b - a.b) * f };
-}
-
-/** Middle depth of each stratum (m): its colour, carried by its grains wherever they go. */
-function stratumDepth(stratum: number): number {
-  const top = stratum === 0 ? 0 : STRATA_DEPTHS[stratum - 1]!;
-  const bottom = STRATA_DEPTHS[stratum] ?? top + 8;
-  return (top + bottom) / 2;
-}
 
 /**
  * Draws the arena's sand, one pixel per grain in an image the size of the grid, scaled up
@@ -55,8 +20,7 @@ export class SandPainter {
   private readonly pixels: ImageData;
   private readonly words: Uint32Array;
   /** Colours by row and shade (sand), and by row and grain (rock). */
-  private readonly sandColours: Uint32Array;
-  private readonly rockColours: Uint32Array;
+  private readonly colours: SandColours;
   private readonly changed: Int32Array;
   private readonly spanLeft: Int32Array;
   private readonly spanRight: Int32Array;
@@ -78,33 +42,11 @@ export class SandPainter {
     this.imageContext = context;
     this.pixels = context.createImageData(columns, rows);
     this.words = new Uint32Array(this.pixels.data.buffer);
-    this.sandColours = new Uint32Array(rows * SHADES);
-    this.rockColours = new Uint32Array(rows * 4);
-    this.buildColours();
+    this.colours = new SandColours(measures);
     this.changed = new Int32Array(grid.chunkColumns * grid.chunkRows);
     this.spanLeft = new Int32Array(grid.chunkRows);
     this.spanRight = new Int32Array(grid.chunkRows);
     this.tops = new Float64Array(columns);
-  }
-
-  private buildColours(): void {
-    const { rows, cellM, topZ, bottomZ } = this.measures;
-    for (let y = 0; y < rows; y++) {
-      const z = topZ - (y + 0.5) * cellM;
-      const light = 1 - DEPTH_SHADOW * Math.min(1, Math.max(0, -z / -bottomZ));
-      for (let shade = 0; shade < SHADES; shade++) {
-        const stratum = Math.min(STRATA_COUNT - 1, stratumOf(shade));
-        const band = stratum % 2 === 0 ? STRATUM_CONTRAST : -STRATUM_CONTRAST;
-        const grain = (((shade & 3) - 1.5) / 1.5) * GRAIN_CONTRAST;
-        this.sandColours[y * SHADES + shade] = pack(
-          sandAt(stratumDepth(stratum)),
-          light * (1 + band + grain),
-        );
-      }
-      for (let grain = 0; grain < 4; grain++) {
-        this.rockColours[y * 4 + grain] = pack(ROCK, light * (1 + (grain - 1.5) * 0.04));
-      }
-    }
   }
 
   /** Brings the image up to date: repaints only the chunks that changed since last time. */
@@ -136,7 +78,7 @@ export class SandPainter {
 
   private paintChunk(cx: number, cy: number): void {
     const { cells, shades, width, height } = this.grid;
-    const { words, sandColours, rockColours } = this;
+    const { words, colours } = this;
     const x0 = cx * CHUNK;
     const x1 = Math.min(width, x0 + CHUNK);
     const y1 = Math.min(height, (cy + 1) * CHUNK);
@@ -144,8 +86,8 @@ export class SandPainter {
       for (let x = x0, i = y * width + x0; x < x1; x++, i++) {
         const element = cells[i]!;
         if (element === Element.Air) words[i] = 0;
-        else if (element === Element.Sand) words[i] = sandColours[y * SHADES + shades[i]!]!;
-        else words[i] = rockColours[y * 4 + (shades[i]! & 3)]!;
+        else if (element === Element.Sand) words[i] = colours.sandAt(y, shades[i]!);
+        else words[i] = colours.rockAt(y, shades[i]!);
       }
     }
   }

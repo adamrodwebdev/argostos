@@ -114,6 +114,7 @@ export class Truck implements Target {
   private glass = false;
   private biteRest = 0;
   private bitten = false;
+  private running = false;
 
   constructor(parts: TruckParts) {
     this.id = parts.id;
@@ -156,6 +157,10 @@ export class Truck implements Target {
   get isTrapped(): boolean {
     return this.glass;
   }
+  /** Its convoy runs for an exit (the scanner shows it). */
+  get isFleeing(): boolean {
+    return this.running;
+  }
   /** It was caught while held in glass (a convoy taken by glass alone wins a star). */
   get caughtInGlass(): boolean {
     return this.bitten;
@@ -191,6 +196,11 @@ export class Truck implements Target {
   /** A bite took plate off without finishing it: the jaws rest a moment before the next. */
   restFromBite(): void {
     this.biteRest = BITE_REST_S;
+  }
+
+  /** Its convoy panicked: it runs for an exit. */
+  run(): void {
+    this.running = true;
   }
 
   /** Held in glass (or let go): the dome says so every step. */
