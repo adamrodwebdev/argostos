@@ -21,14 +21,17 @@
     "verify": "npm run lint && npm run format:check && npm run typecheck && npm run test && npm run build",
     "frame-time": "node scripts/frame-time.ts",
     "takedown-shots": "node scripts/takedown-shots.ts",
-    "session-code": "node scripts/session-code.ts"
+    "session-code": "node scripts/session-code.ts",
+    "lighthouse": "node scripts/lighthouse.ts"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
-    "@playwright/test": "1.65.1",
+    "@playwright/test": "1.64.0",
     "@types/node": "24.19.2",
+    "chrome-launcher": "1.2.3",
     "eslint": "10.15.0",
     "eslint-plugin-oxlint": "1.94.0",
+    "lighthouse": "13.6.0",
     "oxlint": "1.94.0",
     "prettier": "3.10.1",
     "typescript": "6.0.3",
