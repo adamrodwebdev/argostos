@@ -13,16 +13,19 @@ const TOWER_CLEAR_M = 16;
 const EDGE_M = 30;
 /** It digs until the pit is this deep (m), and goes on under a truck driving over it. */
 const PIT_DEPTH_M = 3.6;
-/** Where it waits for the fall: deep, behind the truck (m). */
-const WAIT_BEHIND_M = 26;
-const WAIT_Z = -18;
+/** Where it waits for the fall: just past the pit, deep under it (m), so the pit is in view. */
+const WAIT_PAST_M = 5;
+const WAIT_DEPTH_M = 12;
+/** With no truck, it waits mid-arena this deep (m). */
+const IDLE_Z = -18;
 const FULL_AT_M = 9;
 
 /**
  * A bot that only digs (`?autopilot=1&bot=sapper`), to watch the moving ground take the
  * Company's trucks: it opens a pit in the way of the nearest truck with shallow passes (and goes
- * on under the truck when it comes over the pit before it is deep), waits deep for it to drive
- * in, and opens a new pit ahead of a truck that got across. It never bites or acts. For films
+ * on under the truck when it comes over the pit before it is deep), waits deep past the pit for
+ * the truck to drive in, undermines a truck stuck in it, and opens a new pit ahead of a truck
+ * that got across. It never bites or acts. For films
  * of the fall and for the terrain's tests in the real game; deterministic.
  */
 export class SapperIntent implements Autopilot {
@@ -47,12 +50,18 @@ export class SapperIntent implements Autopilot {
     const truck = this.quarry();
     const head = { x: headX, z: headZ };
     if (!truck) {
-      this.target.aim(ARENA.widthM / 2, WAIT_Z, FULL_AT_M);
+      this.target.aim(ARENA.widthM / 2, IDLE_Z, FULL_AT_M);
+    } else if (truck.rig.stuck) {
+      // Stuck in the pit: the sand under it goes too.
+      const middle = (truck.rig.rearX + truck.rig.frontX) / 2;
+      const way = truck.rig.direction;
+      this.undermining.aim({ from: middle - way * 12, to: middle + way * 3 }, head, this.target);
     } else if (this.pitDepth() < PIT_DEPTH_M) {
       const span = { from: this.pitX - PIT_HALF_M, to: this.pitX + PIT_HALF_M };
       this.undermining.aim(span, head, this.target);
     } else {
-      this.target.aim(truck.rig.rearX - truck.rig.direction * WAIT_BEHIND_M, WAIT_Z, FULL_AT_M);
+      const x = this.pitX + truck.rig.direction * (PIT_HALF_M + WAIT_PAST_M);
+      this.target.aim(x, this.pitTop - WAIT_DEPTH_M, FULL_AT_M);
     }
     return this.target.steer(headX, headZ, out);
   }
