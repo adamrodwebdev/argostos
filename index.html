@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta
+      name="description"
+      content="Argostos, prototype: a glass worm swims through the falling sand of Sandopia and hunts the trucks of a mining company."
+    />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#86aad2" />
+    <title>Argostos · prototype</title>
+    <style>
+      /* The first paint is this page's own: the desert's colours under the sky, and one line. */
+      :root {
+        color-scheme: light dark;
+        --panel: light-dark(rgb(250 246 239 / 0.88), rgb(13 16 18 / 0.84));
+        --ink: light-dark(#1d1812, #f4eee5);
+        --edge: light-dark(rgb(84 62 38 / 0.24), rgb(255 255 255 / 0.18));
+        --accent: light-dark(#8f5200, #f4b647);
+      }
+      html {
+        cursor: default;
+      }
+      :where(
+        a[href],
+        button,
+        select,
+        summary,
+        label[for],
+        [role='button'],
+        [role='link'],
+        input:is([type='checkbox'], [type='radio'], [type='range'])
+      ) {
+        cursor: pointer;
+      }
+      :disabled,
+      [aria-disabled='true'] {
+        cursor: not-allowed;
+      }
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        overflow: hidden;
+        overscroll-behavior: none;
+      }
+      body {
+        background: linear-gradient(
+          #86aad2 0%,
+          #cfdde6 17%,
+          #efe2c8 28%,
+          #d6b47f 28%,
+          #b98d59 46%,
+          #8a633e 72%,
+          #5f432a 100%
+        );
+        color: var(--ink);
+        font:
+          1rem/1.4 system-ui,
+          -apple-system,
+          'Segoe UI',
+          Roboto,
+          sans-serif;
+      }
+      ::selection {
+        background: color-mix(in srgb, var(--accent) 32%, transparent);
+      }
+      /* The game is interface: never selected, no long-press menu, no tap flash. */
+      .game {
+        position: fixed;
+        inset: 0;
+        -webkit-user-select: none;
+        user-select: none;
+        -webkit-touch-callout: none;
+        -webkit-tap-highlight-color: transparent;
+      }
+      /* Only the play area holds still (zoom stays possible everywhere else); the cursor marks
+         where the hero heads. */
+      .world {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        display: block;
+        touch-action: none;
+        cursor: crosshair;
+      }
+      .status {
+        position: absolute;
+        left: 50%;
+        bottom: max(env(safe-area-inset-bottom), 1rem);
+        transform: translateX(-50%);
+        box-sizing: border-box;
+        width: max-content;
+        max-width: calc(100% - 2rem);
+        margin: 0;
+        padding: 0.625rem 1rem;
+        border-radius: 1.25rem;
+        background: var(--panel);
+        box-shadow: inset 0 0 0 1px var(--edge);
+        text-align: center;
+        text-wrap: balance;
+      }
+      .readout {
+        position: absolute;
+        top: max(env(safe-area-inset-top), 0.75rem);
+        left: max(env(safe-area-inset-left), 0.75rem);
+        box-sizing: border-box;
+        max-width: calc(100% - 5.25rem);
+        margin: 0;
+        padding: 0.5rem 0.75rem;
+        overflow: hidden;
+        border-radius: 0.5rem;
+        background: var(--panel);
+        box-shadow: inset 0 0 0 1px var(--edge);
+        font:
+          0.875rem/1.35 ui-monospace,
+          'Cascadia Mono',
+          Consolas,
+          monospace;
+        white-space: pre-wrap;
+        pointer-events: none;
+      }
+      /* The one control in P1: sound on or off (48 px, the size of a game's touch control). */
+      .sound {
+        position: absolute;
+        top: max(env(safe-area-inset-top), 0.75rem);
+        right: max(env(safe-area-inset-right), 0.75rem);
+        display: grid;
+        place-items: center;
+        width: 3rem;
+        height: 3rem;
+        padding: 0;
+        border: 0;
+        border-radius: 0.75rem;
+        background: var(--panel);
+        box-shadow: inset 0 0 0 1px var(--edge);
+        color: var(--ink);
+        touch-action: manipulation;
+      }
+      .sound svg {
+        width: 1.5rem;
+        height: 1.5rem;
+        fill: currentColor;
+      }
+      .sound[aria-pressed='true'] .waves,
+      .sound[aria-pressed='false'] .slash {
+        display: none;
+      }
+      .sound:focus-visible {
+        outline: 3px solid var(--accent);
+        outline-offset: 3px;
+      }
+      [hidden] {
+        display: none !important;
+      }
+      .visually-hidden {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        margin: -1px;
+        padding: 0;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
+        border: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="game" id="game" data-state="loading">
+      <h1 class="visually-hidden">Argostos</h1>
+      <canvas
+        class="world"
+        id="world"
+        role="img"
+        aria-label="The desert of Sandopia seen in section."
+      ></canvas>
+      <p class="status" id="status" role="status">Loading the desert…</p>
+      <pre class="readout" id="readout" hidden></pre>
+      <button
+        class="sound"
+        id="sound"
+        type="button"
+        aria-pressed="false"
+        aria-label="Mute the sound"
+        hidden
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path d="M3 9h4l5-4v14l-5-4H3z" />
+          <path
+            class="waves"
+            d="M15.5 8.5a5 5 0 0 1 0 7M18 6a8.5 8.5 0 0 1 0 12"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+          />
+          <path
+            class="slash"
+            d="M15 9l6 6M21 9l-6 6"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+          />
+        </svg>
+      </button>
+    </main>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
