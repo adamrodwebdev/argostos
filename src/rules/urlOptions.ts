@@ -5,7 +5,8 @@ import { GRID_DETAILS, type GridDetail } from './world';
 /*
  * The URL is a door: its options are an allow-list, each read strictly. A value that does not
  * fit keeps the option's default (never a guess); an unknown option is ignored. Nothing here
- * throws: a hand-typed or hostile address still opens the game.
+ * throws: a hand-typed or hostile address still opens the game. A link that cannot carry a query
+ * string (an artifact viewer passes only a plain `#name`) switches a flag on with its hash.
  */
 
 /** The autopilot's ways of playing: the hunter takes the trucks, the sapper only digs pits. */
@@ -42,6 +43,20 @@ export const DEFAULT_OPTIONS: UrlOptions = {
   tester: false,
 };
 
+/** The flags a hash may switch on (`#tester`; `#autopilot` and `#sapper` for our own films). */
+export const HASH_FLAGS = ['tester', 'autopilot', 'sapper'] as const;
+export type HashFlag = (typeof HASH_FLAGS)[number];
+
+/** What each hash flag switches on, over the query's options. */
+const HASH_SWITCHES: ReadonlyMap<HashFlag, Partial<UrlOptions>> = new Map<
+  HashFlag,
+  Partial<UrlOptions>
+>([
+  ['tester', { tester: true }],
+  ['autopilot', { autopilot: true }],
+  ['sapper', { autopilot: true, bot: 'sapper' }],
+]);
+
 /** The longest query string read at all: what is longer is refused before parsing. */
 export const MAX_QUERY_LENGTH = 512;
 /** The longest value of one option, once cleaned. */
@@ -65,8 +80,30 @@ function flag(params: URLSearchParams, key: string): boolean {
   }, false);
 }
 
-/** Reads the options from a query string (`location.search`), strictly. */
-export function readUrlOptions(search: unknown): UrlOptions {
+/**
+ * Reads the options from a query string (`location.search`) and a hash (`location.hash`), both
+ * strictly: the hash is one flag of `HASH_FLAGS`, which switches its options on.
+ */
+export function readUrlOptions(search: unknown, hash: unknown = ''): UrlOptions {
+  const hashFlag = orElse<HashFlag | null>(() => readHashFlag(hash), null);
+  const switches = (hashFlag === null ? undefined : HASH_SWITCHES.get(hashFlag)) ?? {};
+  return { ...readQuery(search), ...switches };
+}
+
+/** The hash's one flag (`#tester`), through the same allow-list reader as the options. */
+function readHashFlag(hash: unknown): HashFlag | null {
+  if (typeof hash !== 'string' || hash.length > MAX_QUERY_LENGTH) return null;
+  const name = hash.startsWith('#') ? hash.slice(1) : hash;
+  if (name === '') return null;
+  return readChoice(
+    readText(name, { maxLength: MAX_VALUE_LENGTH, required: true }, 'hash'),
+    HASH_FLAGS,
+    'hash',
+  );
+}
+
+/** The options of a query string, each read strictly. */
+function readQuery(search: unknown): UrlOptions {
   if (typeof search !== 'string' || search.length > MAX_QUERY_LENGTH) return DEFAULT_OPTIONS;
   const params = new URLSearchParams(search);
   return {

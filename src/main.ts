@@ -20,7 +20,7 @@ const status = element('#status', HTMLElement);
 const readout = element('#readout', HTMLElement);
 canvas.setAttribute('aria-label', text.get('canvas'));
 status.textContent = text.get('loading');
-const options = readUrlOptions(window.location.search);
+const options = readUrlOptions(window.location.search, window.location.hash);
 
 async function boot(): Promise<void> {
   try {

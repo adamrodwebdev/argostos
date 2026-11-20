@@ -43,6 +43,39 @@ describe('readUrlOptions: the URL is an allow-list, read strictly', () => {
     },
   );
 
+  test.each([
+    ['#tester', { tester: true }],
+    ['#autopilot', { autopilot: true, bot: 'hunter' }],
+    ['#sapper', { autopilot: true, bot: 'sapper' }],
+  ] as const)('the hash %s switches its flag on, as a link without a query', (hash, on) => {
+    expect(readUrlOptions('', hash)).toEqual({ ...DEFAULT_OPTIONS, ...on });
+  });
+
+  test('a hash flag adds to the query’s options', () => {
+    expect(readUrlOptions('?hunt=3&mute=1', '#tester')).toEqual({
+      ...DEFAULT_OPTIONS,
+      hunt: 3,
+      mute: true,
+      tester: true,
+    });
+  });
+
+  test.each([
+    ['empty', ''],
+    ['a bare mark', '#'],
+    ['another case', '#Tester'],
+    ['two flags', '#tester&autopilot'],
+    ['an option', '#debug'],
+    ['a query in it', '#tester=1'],
+    ['a name', '#__proto__'],
+    ['encoded', '#t%65ster'],
+    ['too long', `#${'t'.repeat(600)}`],
+    ['not text', 42],
+    ['missing', undefined],
+  ])('a hash that is %s switches nothing on', (_case, hash) => {
+    expect(readUrlOptions('', hash)).toEqual(DEFAULT_OPTIONS);
+  });
+
   test.each(['?tester=true', '?tester=yes', '?tester=01', '?tester=1&tester=1'])(
     'the tester switch %s stays off',
     (query) => {
