@@ -1,6 +1,7 @@
 import { machineRow, type MachineRow } from '../../rules/machines';
 import { SONAR } from '../../rules/sonar';
-import { Integrity } from '../machine/Integrity';
+import type { Integrity } from '../machine/Integrity';
+import { MachineParts } from '../machine/MachineParts';
 import type { Target } from '../machine/Target';
 import type { SandSurface } from '../sand/GridSurface';
 import type { Box } from '../truck/Truck';
@@ -32,6 +33,7 @@ export class Drone implements Target {
   readonly row: MachineRow = machineRow('drone');
   readonly machine = 'drone';
   readonly waveId = -1;
+  readonly parts: MachineParts;
   readonly integrity: Integrity;
   private state: DroneState = 'flying';
   private px: number;
@@ -47,7 +49,8 @@ export class Drone implements Target {
     private readonly beat: DroneBeat,
     private readonly surface: SandSurface,
   ) {
-    this.integrity = new Integrity(this.row.hp);
+    this.parts = new MachineParts(this.row.parts);
+    this.integrity = this.parts.body.integrity;
     this.px = beat.x;
     this.pz = surface.heightAt(beat.x) + SONAR.altitudeM;
   }

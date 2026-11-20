@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { DroneSquad } from '../../../src/logic/drone/DroneSquad';
 import { plainDamage } from '../../../src/rules/combat';
-import { machineRow } from '../../../src/rules/machines';
+import { bodyHp, machineRow } from '../../../src/rules/machines';
 import { NOISE_RINGS, SONAR } from '../../../src/rules/sonar';
 import { STEP_SECONDS } from '../../../src/rules/world';
 import { arena, AWAY } from '../arena';
@@ -59,7 +59,7 @@ describe('DroneSquad: a drone brought down falls into the sand', () => {
     world.events.on('destroyed', ({ crystals: gained }) => crystals.push(gained));
     drones.send({ atS: 0, x: 80, spanM: 10 });
     const drone = drones.all[0]!;
-    const rocks = Math.ceil(machineRow('drone').hp / plainDamage('rock').amount);
+    const rocks = Math.ceil(bodyHp(machineRow('drone')) / plainDamage('rock').amount);
     for (let i = 0; i < rocks; i++) world.combat.hit(drone, 'rock', plainDamage('rock'));
     expect(drone.isFalling).toBe(true);
     for (let i = 0; i < 60 * 4 && drones.all.length > 0; i++) {

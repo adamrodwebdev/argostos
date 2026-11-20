@@ -1,4 +1,5 @@
 import type { Damage, HitKind } from '../../rules/combat';
+import type { PartId } from '../../rules/machines';
 import type { HuntEvents } from '../hunt/HuntEvents';
 import type { Box } from '../truck/Truck';
 import type { Target } from './Target';
@@ -14,17 +15,22 @@ export class Combat {
   constructor(private readonly events: HuntEvents) {}
 
   /**
-   * `target` takes a hit of `kind`. A machine out of the hunt, or already at zero (stalled,
-   * waiting for the bite that finishes it), takes nothing.
+   * `target` takes a hit of `kind` on its part `part` (its body unless told). A machine out of
+   * the hunt, or already at zero (stalled, waiting for the bite that finishes it), takes
+   * nothing. A part brought to zero breaks (its effect plays); the body at zero is the machine
+   * giving out.
    */
-  hit(target: Target, kind: HitKind, damage: Damage): void {
+  hit(target: Target, kind: HitKind, damage: Damage, part: PartId = 'body'): void {
     if (!target.hittable || target.integrity.spent || damage.amount <= 0) return;
-    target.integrity.take(damage.amount);
+    const hit = target.parts.part(part);
+    if (hit.integrity.spent) return;
+    hit.integrity.take(damage.amount);
     target.bodyBox(this.box);
     const x = (this.box.left + this.box.right) / 2;
     this.events.emit('hit', {
       targetId: target.id,
       machine: target.machine,
+      part: hit.id,
       kind,
       damage: damage.amount,
       strong: damage.strong,
@@ -33,7 +39,9 @@ export class Combat {
       waveId: target.waveId,
     });
     // Still standing: the hit only took plate off.
-    if (target.integrity.hp > 0) return;
+    if (hit.integrity.hp > 0) return;
+    hit.effect.broke();
+    if (hit !== target.parts.body) return;
     target.giveOut();
     this.events.emit('gaveOut', {
       targetId: target.id,

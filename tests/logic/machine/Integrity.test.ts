@@ -3,6 +3,8 @@ import { EventBus } from '../../../src/logic/EventBus';
 import type { HuntEventMap } from '../../../src/logic/hunt/HuntEvents';
 import { HuntStats } from '../../../src/logic/hunt/HuntStats';
 import { Integrity } from '../../../src/logic/machine/Integrity';
+import { MachineParts } from '../../../src/logic/machine/MachineParts';
+import { machineRow } from '../../../src/rules/machines';
 
 describe('Integrity: plate taken off hit by hit, never below zero', () => {
   test('hits take plate off; at zero the machine is spent, never below', () => {
@@ -37,6 +39,20 @@ function stats() {
   const events = new EventBus<HuntEventMap>();
   return { events, stats: new HuntStats(events) };
 }
+
+describe('MachineParts: a machine’s health is a list of parts', () => {
+  test('a machine’s parts come from its row; the body carries its life', () => {
+    const parts = new MachineParts(machineRow('armoredHauler').parts);
+    expect(parts.all.map((part) => part.id)).toEqual(['body']);
+    expect(parts.body.integrity.hp).toBe(150);
+    expect(parts.body.effect.id).toBe('none');
+    expect(parts.part('body')).toBe(parts.body);
+  });
+
+  test('a machine with no body is refused', () => {
+    expect(() => new MachineParts([])).toThrow();
+  });
+});
 
 describe('HuntStats: the experts’ three stars', () => {
   test('a hunt never heard, two trucks in one leap and a convoy taken in glass wins all three', () => {

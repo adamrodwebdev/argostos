@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import type { HitEvent } from '../../../src/logic/hunt/HuntEvents';
 import { plainDamage } from '../../../src/rules/combat';
-import { machineRow } from '../../../src/rules/machines';
+import { bodyHp, machineRow } from '../../../src/rules/machines';
 import { BREATH } from '../../../src/rules/combat';
 import { ARENA } from '../../../src/rules/world';
 import { arena, FALLING, jawsUnder, RISING, wave } from '../arena';
@@ -31,8 +31,8 @@ describe('TruckFleet: the bite against the plate', () => {
     const bite = plainDamage('bite').amount;
     world.tick(jawsUnder(truck), RISING);
     expect(truck.isDriving).toBe(true);
-    expect(truck.integrity.hp).toBe(machineRow('armoredHauler').hp - bite);
-    expect(seen.map((hit) => [hit.kind, hit.damage])).toEqual([['bite', bite]]);
+    expect(truck.integrity.hp).toBe(bodyHp(machineRow('armoredHauler')) - bite);
+    expect(seen.map((hit) => [hit.kind, hit.part, hit.damage])).toEqual([['bite', 'body', bite]]);
     // The jaws rest a moment: staying on it does not bite again at once.
     for (let i = 0; i < 20; i++) world.tick(jawsUnder(truck), RISING);
     expect(seen).toHaveLength(1);

@@ -1,6 +1,7 @@
 import { machineRow, type MachineId, type MachineRow } from '../../rules/machines';
 import type { TruckGeometry } from '../../rules/truckManifest';
-import { Integrity } from '../machine/Integrity';
+import type { Integrity } from '../machine/Integrity';
+import { MachineParts } from '../machine/MachineParts';
 import type { Target } from '../machine/Target';
 import type { TruckRig } from './TruckRig';
 
@@ -102,6 +103,7 @@ export class Truck implements Target {
   readonly rig: TruckRig;
   readonly machine: MachineId;
   readonly row: MachineRow;
+  readonly parts: MachineParts;
   readonly integrity: Integrity;
   readonly waveId: number;
   private readonly geometry: TruckGeometry;
@@ -119,7 +121,8 @@ export class Truck implements Target {
     this.geometry = parts.geometry;
     this.machine = parts.machine;
     this.row = machineRow(parts.machine);
-    this.integrity = new Integrity(this.row.hp);
+    this.parts = new MachineParts(this.row.parts);
+    this.integrity = this.parts.body.integrity;
     this.waveId = parts.waveId;
     this.arenaWidthM = parts.arenaWidthM;
   }

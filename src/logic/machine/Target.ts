@@ -1,6 +1,7 @@
 import type { MachineId, MachineRow } from '../../rules/machines';
 import type { Box } from '../truck/Truck';
 import type { Integrity } from './Integrity';
+import type { MachineParts } from './MachineParts';
 
 /**
  * A machine the hero can hit: a truck on the sand or a drone in the air. The combat reads its
@@ -10,6 +11,9 @@ export interface Target {
   readonly id: number;
   readonly machine: MachineId;
   readonly row: MachineRow;
+  /** Its parts, each with its plate (one in P2: the body). */
+  readonly parts: MachineParts;
+  /** Its body's plate: its life. */
   readonly integrity: Integrity;
   /** Still in the hunt and hittable: not caught in a takedown, not falling, not gone. */
   readonly hittable: boolean;

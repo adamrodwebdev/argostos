@@ -10,10 +10,31 @@ export type MachineId = (typeof MACHINE_IDS)[number];
 /** How a machine moves: on the sand on its wheels, or in the air on its rotors. */
 export type MachineKind = 'truck' | 'drone';
 
-export interface MachineRow {
-  readonly kind: MachineKind;
+/**
+ * The parts a machine is made of. P2 has one, the whole body; later a truck's tyres or a
+ * drone's camera will be parts of their own, each with its plate and what breaking it does.
+ */
+export const PART_IDS = ['body'] as const;
+export type PartId = (typeof PART_IDS)[number];
+
+/**
+ * What breaking a part does to its machine (later: a lost tyre slows a truck and makes it
+ * wobble, a lost camera blinds a drone). None yet: the slot is there for the strategies.
+ */
+export const PART_EFFECT_IDS = ['none'] as const;
+export type PartEffectId = (typeof PART_EFFECT_IDS)[number];
+
+export interface PartRow {
+  readonly id: PartId;
   /** Hit points of plate. */
   readonly hp: number;
+  readonly effect: PartEffectId;
+}
+
+export interface MachineRow {
+  readonly kind: MachineKind;
+  /** Its parts; the body carries its life (at zero the machine gives out). */
+  readonly parts: readonly PartRow[];
   /**
    * A life bar over it once touched. Light prey that fall in one bite never show one (the
    * mockup's rule); a test checks that every machine without a bar falls in one bite.
@@ -35,7 +56,7 @@ export const MACHINES: ReadonlyMap<MachineId, MachineRow> = new Map<MachineId, M
     'hauler',
     {
       kind: 'truck',
-      hp: 50,
+      parts: [{ id: 'body', hp: 50, effect: 'none' }],
       bar: false,
       crystals: 8,
       cruiseSpeed: 5.5,
@@ -48,7 +69,7 @@ export const MACHINES: ReadonlyMap<MachineId, MachineRow> = new Map<MachineId, M
     'armoredHauler',
     {
       kind: 'truck',
-      hp: 150,
+      parts: [{ id: 'body', hp: 150, effect: 'none' }],
       bar: true,
       crystals: 16,
       cruiseSpeed: 4.5,
@@ -61,7 +82,7 @@ export const MACHINES: ReadonlyMap<MachineId, MachineRow> = new Map<MachineId, M
     'drone',
     {
       kind: 'drone',
-      hp: 30,
+      parts: [{ id: 'body', hp: 30, effect: 'none' }],
       bar: true,
       crystals: 10,
       cruiseSpeed: 3.5,
@@ -71,6 +92,11 @@ export const MACHINES: ReadonlyMap<MachineId, MachineRow> = new Map<MachineId, M
     },
   ],
 ]);
+
+/** The plate of a machine's body: its life. */
+export function bodyHp(row: MachineRow): number {
+  return row.parts.find((part) => part.id === 'body')?.hp ?? 0;
+}
 
 /** The row of a machine (every id has one: the table is checked by a test). */
 export function machineRow(id: MachineId): MachineRow {

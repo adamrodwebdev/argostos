@@ -1,6 +1,6 @@
 import type { ActionId, HitKind, StrikeMode } from '../../rules/combat';
 import type { PanicCause } from '../../rules/hunts';
-import type { MachineId } from '../../rules/machines';
+import type { MachineId, PartId } from '../../rules/machines';
 import type { TakedownId } from '../../rules/takedowns';
 import type { EventBus } from '../EventBus';
 import type { Direction } from '../truck/TruckRig';
@@ -40,6 +40,8 @@ export interface TakedownBeatEvent {
 export interface HitEvent {
   readonly targetId: number;
   readonly machine: MachineId;
+  /** The part it hit (the body in P2). */
+  readonly part: PartId;
   readonly kind: HitKind;
   readonly damage: number;
   /** A strong hit (a full-speed ram): its number comes out bigger. */

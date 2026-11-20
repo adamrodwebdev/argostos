@@ -10,14 +10,14 @@ import {
   STRIKE,
   strikeModeFor,
 } from '../../src/rules/combat';
-import { MACHINE_IDS, MACHINES, machineRow } from '../../src/rules/machines';
+import { bodyHp, MACHINE_IDS, MACHINES, machineRow } from '../../src/rules/machines';
 import { hears, NOISE_RINGS, noiseRadius, SONAR } from '../../src/rules/sonar';
 
 describe('machines: the table the hunts are made of', () => {
   test('every machine has a row with plate, crystals and a hit-stop of 60 to 120 ms', () => {
     for (const id of MACHINE_IDS) {
       const row = machineRow(id);
-      expect(row.hp).toBeGreaterThan(0);
+      expect(bodyHp(row)).toBeGreaterThan(0);
       expect(row.crystals).toBeGreaterThan(0);
       expect(row.hitStopMs).toBeGreaterThanOrEqual(60);
       expect(row.hitStopMs).toBeLessThanOrEqual(120);
@@ -25,21 +25,30 @@ describe('machines: the table the hunts are made of', () => {
     expect(MACHINES.size).toBe(MACHINE_IDS.length);
   });
 
+  test('a machine is made of parts, its body among them, each part once', () => {
+    for (const row of MACHINES.values()) {
+      const ids = row.parts.map((part) => part.id);
+      expect(ids).toContain('body');
+      expect(new Set(ids).size).toBe(ids.length);
+      for (const part of row.parts) expect(part.hp).toBeGreaterThan(0);
+    }
+  });
+
   test('a machine without a life bar falls in one bite (no bar on one-bite prey)', () => {
     for (const row of MACHINES.values()) {
-      if (!row.bar) expect(brings(row.hp, hitRow('bite').damage)).toBe(true);
+      if (!row.bar) expect(brings(bodyHp(row), hitRow('bite').damage)).toBe(true);
     }
   });
 
   test('the first minute’s truck falls in one bite and shows no life bar', () => {
     expect(machineRow('hauler').bar).toBe(false);
-    expect(brings(machineRow('hauler').hp, hitRow('bite').damage)).toBe(true);
+    expect(brings(bodyHp(machineRow('hauler')), hitRow('bite').damage)).toBe(true);
   });
 
   test('the armoured truck takes several bites and shows its bar', () => {
     const row = machineRow('armoredHauler');
     expect(row.bar).toBe(true);
-    expect(brings(row.hp, hitRow('bite').damage)).toBe(false);
+    expect(brings(bodyHp(row), hitRow('bite').damage)).toBe(false);
   });
 
   test('trucks flee faster than they cruise; drones never flee', () => {
