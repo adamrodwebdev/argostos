@@ -64,6 +64,21 @@ test.describe('the hunt: one finger steers, the actions arrive one by one', () =
     }
   });
 
+  test('hunt 1 shows its drilling tower on the scanner; undermined, it falls and its mark dims', async ({
+    page,
+  }, testInfo) => {
+    test.skip(testInfo.project.name !== 'desktop', 'one look at the tower is enough');
+    test.setTimeout(testInfo.timeout * 3);
+    await openPaused(page, 'mute=1&autopilot=1');
+    const tower = page.locator('.scan .it.t').first();
+    await expect(tower).toBeVisible();
+    await expect(tower).not.toHaveClass(/\bdone\b/);
+    // The autopilot undermines it once the first truck is taken: it falls about 8 s in.
+    await play(page, 10_000);
+    await expect(tower).toBeVisible();
+    await expect(tower).toHaveClass(/\bdone\b/);
+  });
+
   test('the right mouse button on the play area never opens the browser’s menu', async ({
     page,
   }) => {
