@@ -34,7 +34,8 @@ const STRIKE_LABELS: ReadonlyMap<StrikeMode, TextKey> = new Map<StrikeMode, Text
  * first hunt's hint, and the right thumb's actions, which arrive one by one: the breath (the
  * octagon, its gauge filling), the ram (its cooldown a sweep), the strike (its icon a tail up
  * close, a rock at range). The left half of the screen holds no button: one finger steers
- * anywhere. On a computer, small key hints sit by the buttons.
+ * anywhere. On a computer (a fine pointer and no touch screen, as the platform tells it), small
+ * key hints sit by the buttons; on a touch screen the hand shows where to touch instead.
  */
 export class HuntHud {
   readonly element: HTMLElement;

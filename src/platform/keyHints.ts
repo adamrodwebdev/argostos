@@ -1,3 +1,6 @@
+import { orElse, readChoice } from '../rules/input';
+import { POINTER_KINDS } from '../rules/pointerInput';
+
 /**
  * Tells `show` whether the key hints belong on this screen: a fine pointer and a keyboard (a
  * computer), never a touch screen. Decided at the start (a screen that can be touched, or no fine
@@ -9,8 +12,9 @@ export function watchKeyHints(window: Window, show: (on: boolean) => void): void
   window.addEventListener(
     'pointerdown',
     (event) => {
-      // Read as one closed value: only a finger turns the hints off.
-      if (event.pointerType !== 'touch' || !shown) return;
+      // The pointer's kind is read at the door, through the pointers' allow-list.
+      const kind = orElse(() => readChoice(event.pointerType, POINTER_KINDS, 'pointerType'), null);
+      if (kind !== 'touch' || !shown) return;
       shown = false;
       show(false);
     },

@@ -19,10 +19,10 @@ export interface ViewSpan {
 
 /**
  * The arena's scanner in the top row (the mockup's choice over arrows at the edges): the whole
- * arena in a strip, its two striped exits, the window the screen shows, the trucks (with speed
- * lines while they run for an exit), the drones, the drilling towers (dimmed once fallen), and
- * Argostos. Its frame turns cyan while an
- * alarm is up. Marks are made once and moved by their `left` (no element made per frame).
+ * arena in a strip, its two striped exits (as wide as the rock under the gates), the window the
+ * screen shows, the trucks (with speed lines while they run for an exit), the drones, the
+ * drilling towers (dimmed once fallen), and Argostos. Its frame turns cyan while an alarm is
+ * up. Marks are made once and moved by their `left` (no element made per frame).
  */
 export class Scanner {
   readonly element: HTMLElement;
