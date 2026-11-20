@@ -3,6 +3,7 @@ import { HERO_BODY, NOISE, noiseFor } from '../../rules/swimming';
 import type { SteeringIntent } from '../input/Steering';
 import type { GridProbe } from '../sand/GridProbe';
 import type { SandSurface } from '../sand/GridSurface';
+import { HeadTrace } from './HeadTrace';
 import { HeroBody } from './HeroBody';
 import { HeroDigging, type DiggingWorld } from './HeroDigging';
 import { HeroMotion, Transition, type Medium, type TransitionId } from './HeroMotion';
@@ -22,6 +23,9 @@ export interface HeroStart {
 
 /** Points drawn along the body: one per segment of the stand-in (the mockup has 26). */
 const POSE_POINTS = 30;
+/** The head's recent path kept for the runes to come: a place every half metre, 256 of them. */
+const TRACE_PLACES = 256;
+const TRACE_SPACING_M = 0.5;
 
 /**
  * The hero (code name only): a segmented worm that swims through the sand toward the player's
@@ -30,6 +34,9 @@ const POSE_POINTS = 30;
  */
 export class Hero {
   readonly body: HeroBody;
+  /** His head's recent path (a rune's recogniser will read it later). */
+  readonly trace = new HeadTrace(TRACE_PLACES, TRACE_SPACING_M);
+  private clock = 0;
   private readonly motion: HeroMotion;
   private readonly digging: HeroDigging;
   private loudness = 0;
@@ -128,6 +135,8 @@ export class Hero {
     } else if (transition === Transition.Dive) {
       this.digging.burst(this.motion.x, this.motion.z, BURST.dive);
     }
+    this.clock += this.stepSeconds;
+    this.trace.record(this.motion.x, this.motion.z, this.clock);
     // Noise rises at once and fades smoothly; a burst out of the sand is loud.
     const heard = transition === Transition.Breach ? NOISE.breach : noiseFor(this.motion.speed);
     const fade = 1 - Math.exp(-NOISE.follow * this.stepSeconds);
