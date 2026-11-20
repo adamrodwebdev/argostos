@@ -44,6 +44,18 @@ P2, the hunt:
   dome that holds the trucks under it) arriving at 20 s, full; hunt 2 adds the ram (a burst that
   hits hard, its cooldown a sweep on its button); hunt 3 adds the strike (a tail slap up close, a
   rock thrown at range, its icon changing with the range).
+- **The moving ground**: swimming just under the dunes (less than 3.2 m down), Argostos leaves
+  only part of his wake refilled, and the ground over his pass caves in, about a metre each
+  time; the sand he keeps flies out round the hole at his next fast burst (the desert still
+  keeps every grain). A truck over a cave-in or a pit falls: its tyres drop freely and land at
+  the speed of their fall, a hard landing takes plate off (its number shows), a deep fall or a
+  tilt past 34° plays **the fall**, a takedown of its own (the wreck tumbles, breaks and sinks).
+  At a wall too steep to climb a truck is stuck, its wheels spinning in a spray of dust.
+- **The drilling tower** of the first minute (and one in each later hunt): built level on the
+  dunes, it leans as the sand under one side of its base drops, and past 6° it topples: its
+  cables snap in sparks, it crashes on the dunes, twists and sinks. Its plate (200, a bar) can
+  also be brought to zero. On the autopilot it falls at about 10 s, as the first minute plans.
+  It is a bonus, shown on the scanner: a hunt is won by its convoys.
 - **The scanner** of the arena in the top row (the prey off screen, the drones, the striped
   exits, the screen's window), and **the sonar drones**: their cyan rings go down into the sand,
   Argostos's amber rings grow with his speed; when they touch, "Spotted", the drone follows him
@@ -75,32 +87,33 @@ P2, the hunt:
 
 Read strictly at the door; a value that does not fit keeps its default.
 
-| Option      | Values                       | Default    | What it does                                                        |
-| ----------- | ---------------------------- | ---------- | ------------------------------------------------------------------- |
-| `seed`      | 0 to 2147483647              | 147        | The same seed builds the same desert and plays the same hunt        |
-| `hunt`      | 1 to 99                      | 1          | The hunt to start with (past the table, the last hunt plays again)  |
-| `detail`    | `coarse`, `standard`, `fine` | `standard` | The sand's cell: 33, 25 or 20 cm (to measure what the engine holds) |
-| `autopilot` | `1`                          | off        | A bot hunts on its own and goes on to the next hunt (measurements)  |
-| `debug`     | `1`                          | off        | A readout of the frame's cost, the grid, the hero's speed and noise |
-| `mute`      | `1`                          | off        | Starts muted                                                        |
-| `tester`    | `1`                          | off        | A remote tester's link: the pause shows the session's short code    |
+| Option      | Values                       | Default    | What it does                                                         |
+| ----------- | ---------------------------- | ---------- | -------------------------------------------------------------------- |
+| `seed`      | 0 to 2147483647              | 147        | The same seed builds the same desert and plays the same hunt         |
+| `hunt`      | 1 to 99                      | 1          | The hunt to start with (past the table, the last hunt plays again)   |
+| `detail`    | `coarse`, `standard`, `fine` | `standard` | The sand's cell: 33, 25 or 20 cm (to measure what the engine holds)  |
+| `autopilot` | `1`                          | off        | A bot hunts on its own and goes on to the next hunt (measurements)   |
+| `bot`       | `hunter`, `sapper`           | `hunter`   | The autopilot's style: the sapper only digs pits (films of the fall) |
+| `debug`     | `1`                          | off        | A readout of the frame's cost, the grid, the hero's speed and noise  |
+| `mute`      | `1`                          | off        | Starts muted                                                         |
+| `tester`    | `1`                          | off        | A remote tester's link: the pause shows the session's short code     |
 
 ## Stack and scripts
 
 TypeScript (strict), Vite, canvas 2D, Vitest, Playwright, ESLint with typescript-eslint, oxlint,
 Prettier, Lighthouse. No runtime dependency. Node 24 (`.nvmrc`).
 
-| Script                                                | What it does                                                                                     |
-| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| `npm run dev`                                         | Development server on http://localhost:4361/                                                     |
-| `npm run build` / `npm run preview`                   | Type-checked production build, and a server for it                                               |
-| `npm run verify`                                      | Lint, format check, type-check, unit tests and build, as the CI runs them                        |
-| `npm test`                                            | Unit tests (Vitest)                                                                              |
-| `npm run test:e2e`                                    | End-to-end tests on the production build; `E2E_ENGINE=firefox` or `webkit` for the other engines |
-| `npm run lighthouse -- [desktop]`                     | Lighthouse on the production build: three runs, the worst kept, failing under 100                |
-| `npm run frame-time -- <url>`                         | Frame cost at phone and desktop sizes, CPU slowed 4× for the phones, hunts 1 and 3               |
-| `npm run takedown-shots -- <url> <dir> [bite] [hunt]` | Films a takedown frame by frame, plus a contact sheet                                            |
-| `npm run session-code -- <code>`                      | Reads a remote tester's session code                                                             |
+| Script                                                          | What it does                                                                                                       |
+| --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `npm run dev`                                                   | Development server on http://localhost:4361/                                                                       |
+| `npm run build` / `npm run preview`                             | Type-checked production build, and a server for it                                                                 |
+| `npm run verify`                                                | Lint, format check, type-check, unit tests and build, as the CI runs them                                          |
+| `npm test`                                                      | Unit tests (Vitest)                                                                                                |
+| `npm run test:e2e`                                              | End-to-end tests on the production build; `E2E_ENGINE=firefox` or `webkit` for the other engines                   |
+| `npm run lighthouse -- [desktop]`                               | Lighthouse on the production build: three runs, the worst kept, failing under 100                                  |
+| `npm run frame-time -- <url>`                                   | Frame cost at phone and desktop sizes, CPU slowed 4× for the phones, hunts 1 and 3                                 |
+| `npm run takedown-shots -- <url> <dir> [n] [hunt] [bot] [lead]` | Films the n-th takedown frame by frame (a lead of 500 to 2000 ms films the moment before it), plus a contact sheet |
+| `npm run session-code -- <code>`                                | Reads a remote tester's session code                                                                               |
 
 ## Architecture
 
@@ -118,6 +131,10 @@ registry (takedowns, actions, part effects).
 | Platform    | `src/platform/`                                              | The browser's doors: the canvas and its size, the frame loop, pointer and keys, the sprite loader, the Web Audio synthesis, the clipboard, the portal port (ads and game events, a no-op on our site)                                                                                                                                                                                                       |
 | Composition | `src/main.ts`, `src/game/GameApp.ts`, `src/game/HuntPlay.ts` | The entry point (small, painted first) and the game, loaded after the first paint and started in a few short tasks; a `HuntPlay` per hunt (its world, view, steps and time)                                                                                                                                                                                                                                 |
 
+**The terrain's traps** are one data file, `src/rules/terrainTraps.ts`: the undermining
+depth and share, the slope limits and fall damage, the tower's row. **A new bot style** is a
+line in `HuntPlay`'s table and a value in the URL's allow-list.
+
 **A new machine** is a row in `src/rules/machines.ts`. **A new hunt** is a row in
 `src/rules/hunts.ts`. **A new takedown** is a strategy (`src/logic/takedown/`, a
 `TakedownStrategy`) registered in `Hunt`, plus its row in `src/rules/takedowns.ts`; its look
@@ -130,7 +147,12 @@ and sound come from the beats it emits. **A new action** is an `ActionStrategy` 
   hero, the takedowns and the wreckage, the plate and the bite (one-bite prey, several bites,
   stalls), the convoys (patrol, flight, escape, glass), the drones and the sonar, the actions
   (unlocks, cooldowns, the ram's strong hit, the strike's tail and rocks, the breath's gauge),
-  the hunt's director and stars, a bot that never pays finishing hunts 1 to 4, the session code,
+  the hunt's director and stars, a bot that never pays finishing hunts 1 to 4, the moving
+  ground (a shallow pass lowers the surface and keeps every grain, a deep one does not; a
+  truck over a pit falls, lands at the speed of its fall, is stuck at the far wall; a sinkhole
+  plays the fall), the tower (it leans, topples, crashes and sinks; undermined by the hero on
+  the real sand it falls; the hunter fells it about 10 s in; the sapper's pit takes a truck),
+  the session code,
   the damage numbers' placement, the camera's framing, and every reader at the doors with its
   table of hostile inputs.
 - **End to end** (`e2e/`, Playwright, Chrome by default; Firefox and WebKit with `E2E_ENGINE`,

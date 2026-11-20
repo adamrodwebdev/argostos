@@ -60,7 +60,19 @@ and versions follow [Semantic Versioning](https://semver.org/).
   - a place for the runes to come: the hero's recent path, a rune port, empty rune and relic
     tables;
   - the end-to-end tests in Chrome, Firefox and WebKit (`E2E_ENGINE`; the CI plays all three),
-    the overflow sweep from 320 to 2560 px, and `npm run lighthouse` (worst of three runs).
+    the overflow sweep from 320 to 2560 px, and `npm run lighthouse` (worst of three runs);
+  - the terrain's traps, from one data file: undermining (a shallow pass refills only part of
+    its wake, the ground caves in, every grain kept, the rest thrown out at the next burst);
+    trucks on moving ground (tyres that fall freely and land, landing damage shown as a hit, a
+    stop at walls too steep, stuck wheels spinning in dust); the fall, a takedown strategy with
+    its own row, sharing the wreck's breakup with the bite; the drilling tower of the first
+    minute and of each hunt, which leans with the sand, topples past 6°, snaps its cables,
+    crashes, twists and sinks, or falls when its plate is gone, drawn in code, with its bar and
+    its mark on the scanner;
+  - the autopilot undermines a standing tower when no truck is left (hunt 1: it falls at 8 s,
+    crashes at about 10 s), and a second bot style, the sapper (`bot=sapper`), digs sinkholes in
+    the trucks' way; `takedown-shots` films with either bot, and from a lead before the
+    takedown.
 
 ### Changed
 
