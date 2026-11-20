@@ -107,7 +107,9 @@ test.describe('the pause and the end of a hunt', () => {
     page,
   }, testInfo) => {
     test.skip(testInfo.project.name !== 'desktop', 'one journey through a whole hunt is enough');
-    test.setTimeout(testInfo.timeout * 3);
+    // A minute of the game's time, frame by frame: WebKit, drawing without a graphics card,
+    // needed about four and a half minutes of real time for it on the development machine.
+    test.setTimeout(testInfo.timeout * 6);
     await openPaused(page, 'mute=1&autopilot=1');
     await expect
       .poll(
@@ -115,7 +117,7 @@ test.describe('the pause and the end of a hunt', () => {
           await play(page, 5_000);
           return page.locator('#game').getAttribute('data-hunting');
         },
-        { timeout: testInfo.timeout * 2, intervals: [0] },
+        { timeout: testInfo.timeout * 5, intervals: [0] },
       )
       .toBe('ended');
     const end = page.getByRole('dialog', { name: 'Hunt complete' });
