@@ -1,0 +1,60 @@
+name: CI
+
+# Every pull request, and every push to dev (work branches reach dev through pull requests).
+on:
+  pull_request:
+  push:
+    branches: [dev]
+
+permissions:
+  contents: read
+
+# A newer push to the same branch cancels the run it makes useless.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Lint, types, unit tests, build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run format:check
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - name: Bundle sizes
+        run: |
+          ls -l dist/assets
+          gzip -9 -c dist/assets/*.js | wc -c
+
+  smoke:
+    name: Smoke test (Chrome)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      # The production build the smoke test plays (the quality job checks its types).
+      - run: npx vite build
+      # The runner's installed Chrome: no browser download.
+      - run: npm run test:e2e
+        timeout-minutes: 8
+      - uses: actions/upload-artifact@v4
+        if: failure() || cancelled()
+        with:
+          name: smoke-results
+          path: test-results/
+          if-no-files-found: ignore
